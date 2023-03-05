@@ -6,13 +6,21 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Fermekoo/go-kapster/utils"
-	"github.com/Fermekoo/go-kapster/utils/token"
+	"github.com/Fermekoo/orderin-api/utils"
+	"github.com/Fermekoo/orderin-api/utils/token"
 	"github.com/gin-gonic/gin"
 )
 
-func JWTMiddleware(config utils.Config, tokenMaker token.TokenMaker) gin.HandlerFunc {
+func JWTMiddleware(config utils.Config) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+
+		tokenMaker, err := token.NewJWTMaker()
+		if err != nil {
+			err := fmt.Errorf("failed to setup token maker %w", err)
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusUnauthorized, err))
+			return
+		}
+
 		authHeader := ctx.GetHeader(utils.AUTH_HEADER_KEY)
 		if len(authHeader) < 1 {
 			err := errors.New("access token is not provided")

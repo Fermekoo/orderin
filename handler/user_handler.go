@@ -3,8 +3,8 @@ package handler
 import (
 	"net/http"
 
-	"github.com/Fermekoo/go-kapster/services"
-	"github.com/Fermekoo/go-kapster/utils"
+	"github.com/Fermekoo/orderin-api/services"
+	"github.com/Fermekoo/orderin-api/utils"
 	"github.com/gin-gonic/gin"
 )
 

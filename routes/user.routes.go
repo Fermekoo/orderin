@@ -3,12 +3,12 @@ package routes
 import (
 	"log"
 
-	"github.com/Fermekoo/go-kapster/db"
-	"github.com/Fermekoo/go-kapster/handler"
-	"github.com/Fermekoo/go-kapster/middleware"
-	"github.com/Fermekoo/go-kapster/services"
-	"github.com/Fermekoo/go-kapster/utils"
-	"github.com/Fermekoo/go-kapster/utils/token"
+	"github.com/Fermekoo/orderin-api/db"
+	"github.com/Fermekoo/orderin-api/handler"
+	"github.com/Fermekoo/orderin-api/middleware"
+	"github.com/Fermekoo/orderin-api/services"
+	"github.com/Fermekoo/orderin-api/utils"
+	"github.com/Fermekoo/orderin-api/utils/token"
 	"github.com/gin-gonic/gin"
 )
 
@@ -24,6 +24,6 @@ func UserRoutes(config utils.Config, routes *gin.RouterGroup) {
 	authRoutes.POST("/login", handler.Login)
 	authRoutes.POST("/refresh-token", handler.RefreshToken)
 
-	userRoutes := routes.Group("/user").Use(middleware.JWTMiddleware(config, tokenMaker))
+	userRoutes := routes.Group("/user").Use(middleware.JWTMiddleware(config))
 	userRoutes.GET("/profile", handler.Profile)
 }

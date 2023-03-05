@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 
-	"github.com/Fermekoo/go-kapster/api"
-	"github.com/Fermekoo/go-kapster/utils"
+	"github.com/Fermekoo/orderin-api/api"
+	"github.com/Fermekoo/orderin-api/utils"
 )
 
 func main() {

@@ -7,4 +7,7 @@ migrateup:
 migratedown:
 	migrate -path db/migrations -database "mysql://root:root@tcp(localhost:3307)/gokapster?multiStatements=true" -verbose down
 
-.PHONY: createmigrate migrateup migratedown
+run:
+	go run cmd/main.go
+
+.PHONY: createmigrate migrateup migratedown run

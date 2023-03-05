@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Fermekoo/go-kapster/repositories"
-	"github.com/Fermekoo/go-kapster/utils"
-	"github.com/Fermekoo/go-kapster/utils/token"
+	"github.com/Fermekoo/orderin-api/repositories"
+	"github.com/Fermekoo/orderin-api/utils"
+	"github.com/Fermekoo/orderin-api/utils/token"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"

@@ -9,6 +9,7 @@ import (
 type Categories struct {
 	ID         uuid.UUID `gorm:"primaryKey" json:"id"`
 	MerchantID uuid.UUID
+	Merchant   Merchant `gorm:"foreignKey:MerchantID"`
 	Category   string
 	Image      string
 	IsEnable   bool

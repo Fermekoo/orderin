@@ -9,8 +9,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Fermekoo/go-kapster/routes"
-	"github.com/Fermekoo/go-kapster/utils"
+	"github.com/Fermekoo/orderin-api/routes"
+	"github.com/Fermekoo/orderin-api/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -31,13 +31,14 @@ func (server *ApiServer) setupRouter() {
 	router := gin.Default()
 	router.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{
-			"message": "go-kapster api",
+			"message": "orderin-api api",
 			"version": "1.0.0",
 		})
 	})
 
 	v1 := router.Group("/v1")
 	routes.UserRoutes(server.config, v1)
+	routes.CategoryRoutes(server.config, v1)
 
 	server.router = router
 }

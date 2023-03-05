@@ -1,4 +1,4 @@
-module github.com/Fermekoo/go-kapster
+module github.com/Fermekoo/orderin-api
 
 go 1.19
 
