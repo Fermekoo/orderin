@@ -8,8 +8,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func CategoryRoutes(config utils.Config, routes *gin.RouterGroup) {
-	service := services.NewCategoryService(db.Connect(config))
-	handler := handler.NewCategoryHandler(service)
-	routes.GET("/categories", handler.GetAll)
+func ProductRoutes(config utils.Config, routes *gin.RouterGroup) {
+	service := services.NewProductService(db.Connect(config))
+	handler := handler.NewProductHandler(service)
+	routes.GET("/products", handler.GetAll)
 }

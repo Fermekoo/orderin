@@ -3,12 +3,13 @@ package db
 import (
 	"log"
 
+	"github.com/Fermekoo/orderin-api/utils"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
-func Connect() *gorm.DB {
-	dsn := "root:root@tcp(127.0.0.1:3307)/gokapster?parseTime=true"
+func Connect(config utils.Config) *gorm.DB {
+	dsn := config.DSN
 
 	DB, errDB := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if errDB != nil {

@@ -26,15 +26,15 @@ type CategoryResponse struct {
 	Image      string    `json:"image"`
 }
 
-func (service *CategoryService) Categories() ([]*CategoryResponse, error) {
-	var result = []*CategoryResponse{}
+func (service *CategoryService) Categories() ([]CategoryResponse, error) {
+	var result = []CategoryResponse{}
 	categories, err := service.categoriesRepo.GetAll()
 	if err != nil {
 		return result, err
 	}
 
 	for _, cat := range categories {
-		category := &CategoryResponse{
+		category := CategoryResponse{
 			ID:         cat.ID,
 			Category:   cat.Category,
 			MerchantID: cat.MerchantID,

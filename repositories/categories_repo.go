@@ -15,7 +15,7 @@ func NewCategoriesRepo(db *gorm.DB) *CategoriesRepo {
 func (repo *CategoriesRepo) GetAll() ([]Categories, error) {
 	var categories []Categories
 
-	err := repo.db.Preload("Merchant").Find(&categories).Error
+	err := repo.db.Find(&categories).Error
 
 	return categories, err
 }

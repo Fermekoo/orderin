@@ -17,7 +17,7 @@ func UserRoutes(config utils.Config, routes *gin.RouterGroup) {
 	if err != nil {
 		log.Fatal("failed to setup token maker %w", err)
 	}
-	service := services.NewUserService(config, db.Connect(), tokenMaker)
+	service := services.NewUserService(config, db.Connect(config), tokenMaker)
 	handler := handler.NewUserHandler(service)
 	authRoutes := routes.Group("/auth")
 	authRoutes.POST("/register", handler.Register)
