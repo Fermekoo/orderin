@@ -1,6 +1,9 @@
 package repositories
 
-import "gorm.io/gorm"
+import (
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+)
 
 type ProductRepo struct {
 	db *gorm.DB
@@ -18,4 +21,12 @@ func (repo *ProductRepo) GetAll() ([]Product, error) {
 	err := repo.db.Preload("Category").Find(&products).Error
 
 	return products, err
+}
+
+func (repo *ProductRepo) FindById(productId uuid.UUID) (Product, error) {
+	var product Product
+
+	err := repo.db.Preload("Category").First(&product, "id = ?", productId).Error
+
+	return product, err
 }

@@ -50,3 +50,21 @@ func (service *ProductService) Products() ([]ProductResponse, error) {
 	}
 	return result, nil
 }
+
+func (service *ProductService) Product(productId uuid.UUID) (ProductResponse, error) {
+	var result = ProductResponse{}
+	product, err := service.productRepo.FindById(productId)
+	if err != nil {
+		return result, err
+	}
+
+	result.ID = product.ID
+	result.CategoryID = product.CategoryID
+	result.Category = product.Category.Category
+	result.Name = product.Name
+	result.Price = product.Price
+	result.Description = product.Description
+	result.Image = product.Image
+
+	return result, nil
+}

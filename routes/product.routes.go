@@ -12,4 +12,5 @@ func ProductRoutes(config utils.Config, routes *gin.RouterGroup) {
 	service := services.NewProductService(db.Connect(config))
 	handler := handler.NewProductHandler(service)
 	routes.GET("/products", handler.GetAll)
+	routes.GET("/products/:id", handler.Detail)
 }
