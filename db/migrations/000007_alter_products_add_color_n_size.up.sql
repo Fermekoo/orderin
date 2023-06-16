@@ -1,0 +1,1 @@
+ALTER TABLE products ADD color VARCHAR(50), ADD size INT(10);

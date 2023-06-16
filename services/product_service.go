@@ -22,10 +22,12 @@ type ProductResponse struct {
 	ID          uuid.UUID `json:"id"`
 	CategoryID  uuid.UUID `json:"categoryId"`
 	Category    string    `json:"category"`
-	Name        string    `json:"name"`
+	Title       string    `json:"title"`
 	Price       uint64    `json:"price"`
 	Description string    `json:"description"`
 	Image       string    `json:"image"`
+	Size        uint64    `json:"size"`
+	Color       string    `json:"color"`
 }
 
 func (service *ProductService) Products() ([]ProductResponse, error) {
@@ -40,10 +42,12 @@ func (service *ProductService) Products() ([]ProductResponse, error) {
 			ID:          p.ID,
 			CategoryID:  p.CategoryID,
 			Category:    p.Category.Category,
-			Name:        p.Name,
+			Title:       p.Name,
 			Price:       p.Price,
 			Description: p.Description,
 			Image:       p.Image,
+			Size:        p.Size,
+			Color:       p.Color,
 		}
 
 		result = append(result, product)
@@ -61,7 +65,7 @@ func (service *ProductService) Product(productId uuid.UUID) (ProductResponse, er
 	result.ID = product.ID
 	result.CategoryID = product.CategoryID
 	result.Category = product.Category.Category
-	result.Name = product.Name
+	result.Title = product.Name
 	result.Price = product.Price
 	result.Description = product.Description
 	result.Image = product.Image

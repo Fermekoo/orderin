@@ -37,6 +37,7 @@ func (server *ApiServer) setupRouter() {
 	})
 
 	v1 := router.Group("/v1")
+	v1.Static("/assets", "./assets")
 	routes.UserRoutes(server.config, v1)
 	routes.CategoryRoutes(server.config, v1)
 	routes.ProductRoutes(server.config, v1)

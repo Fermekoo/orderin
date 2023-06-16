@@ -16,4 +16,5 @@ func CartRoutes(config utils.Config, routes *gin.RouterGroup) {
 
 	cartRoutes := routes.Group("/").Use(middleware.JWTMiddleware(config))
 	cartRoutes.POST("/carts", handler.AddCart)
+	cartRoutes.GET("/carts", handler.GetAll)
 }

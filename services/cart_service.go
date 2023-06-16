@@ -3,7 +3,6 @@ package services
 import (
 	"github.com/Fermekoo/orderin-api/repositories"
 	"github.com/Fermekoo/orderin-api/utils"
-	"github.com/Fermekoo/orderin-api/utils/token"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -29,7 +28,7 @@ type AddCart struct {
 }
 
 func (service *CartService) Add(ctx *gin.Context, payload *AddCart) error {
-	authUser := ctx.MustGet(utils.AUTH_PAYLOAD_KEY).(*token.Payload)
+	authUser := getAuthUser(ctx)
 
 	cartId, err := uuid.NewRandom()
 	if err != nil {
@@ -45,4 +44,35 @@ func (service *CartService) Add(ctx *gin.Context, payload *AddCart) error {
 
 	err = service.cartRepo.Add(cart)
 	return err
+}
+
+type CartResponse struct {
+	CartId   uuid.UUID `json:"cartId"`
+	Product  string    `json:"product"`
+	Price    uint64    `json:"price"`
+	Quantity uint32    `json:"quantity"`
+}
+
+func (service *CartService) GetAll(ctx *gin.Context) ([]CartResponse, error) {
+	var result []CartResponse
+
+	authUser := getAuthUser(ctx)
+	carts, err := service.cartRepo.GetAll(authUser.UserID)
+	if err != nil {
+		return result, err
+	}
+
+	for _, c := range carts {
+		cart := CartResponse{
+			CartId:   c.ID,
+			Product:  c.Product.Name,
+			Price:    c.Product.Price,
+			Quantity: c.Quantity,
+		}
+
+		result = append(result, cart)
+	}
+
+	return result, nil
+
 }

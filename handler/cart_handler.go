@@ -33,3 +33,13 @@ func (handler *CartHandler) AddCart(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusCreated, utils.ResponseOK(http.StatusCreated, "success", nil))
 }
+
+func (handler *CartHandler) GetAll(ctx *gin.Context) {
+	carts, err := handler.service.GetAll(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, utils.ResponseOK(http.StatusOK, "carts user", carts))
+}

@@ -16,6 +16,8 @@ type Product struct {
 	IsEnable    bool
 	Description string
 	Image       string
+	Color       string
+	Size        uint64
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }

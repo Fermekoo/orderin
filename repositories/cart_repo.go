@@ -26,3 +26,11 @@ func (repo *CartRepo) Add(cart *Cart) error {
 
 	return err
 }
+
+func (repo *CartRepo) GetAll(user_id uuid.UUID) ([]Cart, error) {
+	var cart []Cart
+
+	err := repo.db.Preload("Product").Where("user_id =?", user_id).Find(&cart).Error
+
+	return cart, err
+}
