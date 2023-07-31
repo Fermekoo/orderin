@@ -2,6 +2,7 @@ package services
 
 import (
 	"github.com/Fermekoo/orderin-api/repositories"
+	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -30,12 +31,8 @@ type ProductResponse struct {
 	Color       string    `json:"color"`
 }
 
-func (service *ProductService) Products() ([]ProductResponse, error) {
+func productResponses(products []repositories.Product) ([]ProductResponse, error) {
 	var result = []ProductResponse{}
-	products, err := service.productRepo.GetAll()
-	if err != nil {
-		return result, err
-	}
 
 	for _, p := range products {
 		product := ProductResponse{
@@ -54,6 +51,23 @@ func (service *ProductService) Products() ([]ProductResponse, error) {
 	}
 	return result, nil
 }
+func (service *ProductService) Products(ctx *gin.Context) ([]ProductResponse, error) {
+	categoryId, CategoryIdExists := ctx.GetQuery("category")
+	if CategoryIdExists && categoryId != "" {
+
+		products, err := service.productRepo.GetProductByCategoryId(categoryId)
+		if err != nil {
+			return nil, err
+		}
+		return productResponses(products)
+	} else {
+		products, err := service.productRepo.GetAll()
+		if err != nil {
+			return nil, err
+		}
+		return productResponses(products)
+	}
+}
 
 func (service *ProductService) Product(productId uuid.UUID) (ProductResponse, error) {
 	var result = ProductResponse{}
@@ -71,4 +85,14 @@ func (service *ProductService) Product(productId uuid.UUID) (ProductResponse, er
 	result.Image = product.Image
 
 	return result, nil
+}
+
+func (service *ProductService) ProductByCategory(categoryId string) ([]ProductResponse, error) {
+	products, err := service.productRepo.GetProductByCategoryId(categoryId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return productResponses(products)
 }

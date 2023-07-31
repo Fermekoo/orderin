@@ -20,7 +20,7 @@ func NewProductHandler(service *services.ProductService) *ProductHandler {
 }
 
 func (handler *ProductHandler) GetAll(ctx *gin.Context) {
-	products, err := handler.service.Products()
+	products, err := handler.service.Products(ctx)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, err))
 		return

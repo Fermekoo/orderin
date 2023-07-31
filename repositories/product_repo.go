@@ -30,3 +30,11 @@ func (repo *ProductRepo) FindById(productId uuid.UUID) (Product, error) {
 
 	return product, err
 }
+
+func (repo *ProductRepo) GetProductByCategoryId(categoryId string) ([]Product, error) {
+	var products []Product
+
+	err := repo.db.Preload("Category").Find(&products, "category_id = ?", categoryId).Error
+
+	return products, err
+}
