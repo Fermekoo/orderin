@@ -43,3 +43,29 @@ func (handler *CartHandler) GetAll(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, utils.ResponseOK(http.StatusOK, "carts user", carts))
 }
+
+func (handler *CartHandler) UpdateQty(ctx *gin.Context) {
+	var request services.UpdateQty
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, err))
+		return
+	}
+
+	err := handler.service.UpdateQty(ctx, &request)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, utils.ResponseOK(http.StatusOK, "success", nil))
+}
+
+func (handler *CartHandler) Delete(ctx *gin.Context) {
+	err := handler.service.Delete(ctx)
+	if err != nil {
+		ctx.JSON(http.StatusUnprocessableEntity, utils.ErrorResponse(http.StatusUnprocessableEntity, err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, utils.ResponseOK(http.StatusOK, "success", nil))
+}

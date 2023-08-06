@@ -74,5 +74,30 @@ func (service *CartService) GetAll(ctx *gin.Context) ([]CartResponse, error) {
 	}
 
 	return result, nil
+}
 
+type UpdateQty struct {
+	Action string `json:"action" binding:"required,oneof=+ -"`
+}
+
+func (service *CartService) UpdateQty(ctx *gin.Context, updateQty *UpdateQty) error {
+	authUser := getAuthUser(ctx)
+	cartId, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		return err
+	}
+
+	err = service.cartRepo.UpdateQty(authUser.UserID, cartId, updateQty.Action)
+	return err
+}
+
+func (service *CartService) Delete(ctx *gin.Context) error {
+	authUser := getAuthUser(ctx)
+	cartId, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		return err
+	}
+	err = service.cartRepo.Delete(authUser.UserID, cartId)
+
+	return err
 }
