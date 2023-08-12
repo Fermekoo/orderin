@@ -31,7 +31,7 @@ func (repo *CartRepo) Add(cart *Cart) error {
 func (repo *CartRepo) GetAll(userId uuid.UUID) ([]Cart, error) {
 	var cart []Cart
 
-	err := repo.db.Preload("Product").Where("user_id =?", userId).Find(&cart).Error
+	err := repo.db.Preload("Product.Category.Merchant").Where("user_id =?", userId).Find(&cart).Error
 
 	return cart, err
 }
@@ -56,4 +56,11 @@ func (repo *CartRepo) Delete(userId uuid.UUID, cartId uuid.UUID) error {
 
 	err := repo.db.Where("user_id = ?", userId).Where("id = ?", cartId).Delete(&cart).Error
 	return err
+}
+
+func (repo *CartRepo) FindByProductId(userId uuid.UUID, productId uuid.UUID) (Cart, error) {
+	var cart Cart
+	err := repo.db.Where("product_id", productId).Where("user_id", userId).First(&cart).Error
+
+	return cart, err
 }

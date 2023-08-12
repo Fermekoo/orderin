@@ -1,6 +1,9 @@
 package services
 
 import (
+	"errors"
+	"fmt"
+
 	"github.com/Fermekoo/orderin-api/repositories"
 	"github.com/Fermekoo/orderin-api/utils"
 	"github.com/gin-gonic/gin"
@@ -30,27 +33,46 @@ type AddCart struct {
 func (service *CartService) Add(ctx *gin.Context, payload *AddCart) error {
 	authUser := getAuthUser(ctx)
 
-	cartId, err := uuid.NewRandom()
-	if err != nil {
-		return err
+	cart, err := service.cartRepo.FindByProductId(authUser.UserID, payload.ProductID)
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		err = nil
+		cartId, err := uuid.NewRandom()
+		if err != nil {
+			return err
+		}
+
+		cart := &repositories.Cart{
+			ID:        cartId,
+			UserID:    authUser.UserID,
+			ProductID: payload.ProductID,
+			Quantity:  payload.Quantity,
+		}
+		err = service.cartRepo.Add(cart)
+		if err != nil {
+			return err
+		}
+
+	} else {
+		err = service.cartRepo.UpdateQty(authUser.UserID, cart.ID, "+")
+		fmt.Println("update")
 	}
 
-	cart := &repositories.Cart{
-		ID:        cartId,
-		UserID:    authUser.UserID,
-		ProductID: payload.ProductID,
-		Quantity:  payload.Quantity,
-	}
-
-	err = service.cartRepo.Add(cart)
 	return err
 }
 
 type CartResponse struct {
+	MerchantId   uuid.UUID             `json:"merchantId"`
+	MerchantName string                `json:"merchantName"`
+	Items        []CartProductResponse `json:"items"`
+	Total        uint64                `json:"total"`
+}
+type CartProductResponse struct {
 	CartId   uuid.UUID `json:"cartId"`
 	Product  string    `json:"product"`
 	Price    uint64    `json:"price"`
 	Quantity uint32    `json:"quantity"`
+	Total    uint64    `json:"total"`
 }
 
 func (service *CartService) GetAll(ctx *gin.Context) ([]CartResponse, error) {
@@ -62,18 +84,37 @@ func (service *CartService) GetAll(ctx *gin.Context) ([]CartResponse, error) {
 		return result, err
 	}
 
+	groupedMap := make(map[uuid.UUID]CartResponse)
 	for _, c := range carts {
-		cart := CartResponse{
+
+		item := CartProductResponse{
 			CartId:   c.ID,
 			Product:  c.Product.Name,
 			Price:    c.Product.Price,
 			Quantity: c.Quantity,
+			Total:    c.Product.Price * uint64(c.Quantity),
 		}
 
-		result = append(result, cart)
+		if merchant, exists := groupedMap[c.Product.Category.MerchantID]; exists {
+			merchant.Total += item.Total
+			merchant.Items = append(merchant.Items, item)        //add new item to merchant.Itemst
+			groupedMap[c.Product.Category.MerchantID] = merchant // override old merchant with new Merchant which updated item
+		} else {
+			groupedMap[c.Product.Category.MerchantID] = CartResponse{
+				MerchantId:   c.Product.Category.MerchantID,
+				MerchantName: c.Product.Category.Merchant.Name,
+				Items:        []CartProductResponse{item},
+				Total:        item.Total,
+			}
+		}
 	}
 
-	return result, nil
+	var groupedMerchants []CartResponse
+	for _, merchant := range groupedMap {
+		groupedMerchants = append(groupedMerchants, merchant)
+	}
+
+	return groupedMerchants, nil
 }
 
 type UpdateQty struct {
