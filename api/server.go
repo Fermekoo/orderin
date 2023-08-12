@@ -42,6 +42,7 @@ func (server *ApiServer) setupRouter() {
 	routes.CategoryRoutes(server.config, v1)
 	routes.ProductRoutes(server.config, v1)
 	routes.CartRoutes(server.config, v1)
+	routes.OrderRoutes(server.config, v1)
 
 	server.router = router
 }

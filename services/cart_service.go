@@ -2,7 +2,6 @@ package services
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/Fermekoo/orderin-api/repositories"
 	"github.com/Fermekoo/orderin-api/utils"
@@ -55,7 +54,6 @@ func (service *CartService) Add(ctx *gin.Context, payload *AddCart) error {
 
 	} else {
 		err = service.cartRepo.UpdateQty(authUser.UserID, cart.ID, "+")
-		fmt.Println("update")
 	}
 
 	return err

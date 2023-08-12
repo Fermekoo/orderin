@@ -15,6 +15,7 @@ type Config struct {
 	RefreshTokenSecretKey string        `mapstructure:"REFRESH_TOKEN_SECRET_KEY"`
 	TokenRefreshDuration  time.Duration `mapstructure:"TOKEN_REFRESH_DURATION"`
 	DSN                   string        `mapstructure:"DSN"`
+	OderFee               uint64        `mapstructure:"ORDER_FEE"`
 }
 
 func LoadConfig(path string) (config Config, err error) {

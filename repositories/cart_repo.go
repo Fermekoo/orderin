@@ -16,12 +16,6 @@ func NewCartRepo(db *gorm.DB) *CartRepo {
 	}
 }
 
-type AddCart struct {
-	UserID    uuid.UUID
-	ProductID uuid.UUID
-	Quantity  uint32
-}
-
 func (repo *CartRepo) Add(cart *Cart) error {
 	err := repo.db.Create(&cart).Error
 
@@ -62,5 +56,12 @@ func (repo *CartRepo) FindByProductId(userId uuid.UUID, productId uuid.UUID) (Ca
 	var cart Cart
 	err := repo.db.Where("product_id", productId).Where("user_id", userId).First(&cart).Error
 
+	return cart, err
+}
+
+func (repo *CartRepo) GetSelectedItems(userId uuid.UUID, selectedIds []uuid.UUID) ([]Cart, error) {
+	var cart []Cart
+
+	err := repo.db.Preload("Product.Category.Merchant").Where("user_id", userId).Where("id in ?", selectedIds).Find(&cart).Error
 	return cart, err
 }
