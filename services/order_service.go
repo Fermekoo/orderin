@@ -3,6 +3,7 @@ package services
 import (
 	"log"
 
+	"github.com/Fermekoo/orderin-api/payment"
 	"github.com/Fermekoo/orderin-api/repositories"
 	"github.com/Fermekoo/orderin-api/utils"
 	"github.com/gin-gonic/gin"
@@ -28,10 +29,11 @@ func NewOrderService(config utils.Config, db *gorm.DB) *OrderService {
 }
 
 type AddInvoice struct {
-	CartItems []uuid.UUID `json:"cartItems" binding:"required,dive"`
+	CartItems      []uuid.UUID `json:"cartItems" binding:"required,dive"`
+	PaymentChannel string      `json:"paymentChannel" binding:"required"`
 }
 
-func (service *OrderService) CreateInvoice(ctx *gin.Context, payloads AddInvoice) error {
+func (service *OrderService) CreateInvoice(ctx *gin.Context, payloads AddInvoice) interface{} {
 	authUser := getAuthUser(ctx)
 	carts, err := service.cartRepo.GetSelectedItems(authUser.UserID, payloads.CartItems)
 	if err != nil {
@@ -53,7 +55,7 @@ func (service *OrderService) CreateInvoice(ctx *gin.Context, payloads AddInvoice
 			merchant.MerchantID = c.Product.Category.MerchantID
 			merchant.UserID = authUser.UserID
 			merchant.Total += item.Total
-			merchant.Fee = service.config.OderFee
+			merchant.Fee = service.config.OrderFee
 			merchant.TotalPayment = merchant.Total + merchant.Fee
 			merchant.Details = append(merchant.Details, &item)
 			groupedMap[c.Product.Category.MerchantID] = merchant
@@ -62,8 +64,8 @@ func (service *OrderService) CreateInvoice(ctx *gin.Context, payloads AddInvoice
 				MerchantID:   c.Product.Category.MerchantID,
 				UserID:       authUser.UserID,
 				Total:        item.Total,
-				Fee:          service.config.OderFee,
-				TotalPayment: item.Total + service.config.OderFee,
+				Fee:          service.config.OrderFee,
+				TotalPayment: item.Total + service.config.OrderFee,
 				Details:      []*repositories.InvoiceDetails{&item},
 			}
 		}
@@ -71,9 +73,24 @@ func (service *OrderService) CreateInvoice(ctx *gin.Context, payloads AddInvoice
 
 	var groupedInvoicesByMerchant []*repositories.Invoice
 	for _, merchant := range groupedMap {
+		orderID, err := uuid.NewRandom()
+		if err != nil {
+			return err
+		}
+		merchant.OderID = orderID
+		paymentVendor := payment.NewMidtrans(service.config)
+		payloadsPayment := &payment.CreatePayment{
+			OrderID: merchant.OderID,
+			Bank:    payloads.PaymentChannel,
+			Amount:  int(merchant.TotalPayment),
+		}
+
+		orderPayment, _ := paymentVendor.Pay(payloadsPayment)
+
+		merchant.PaymentResult = orderPayment
 		groupedInvoicesByMerchant = append(groupedInvoicesByMerchant, merchant)
 	}
-
+	return groupedInvoicesByMerchant
 	err = service.orderRepo.Create(groupedInvoicesByMerchant)
 	return err
 }

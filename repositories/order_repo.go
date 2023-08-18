@@ -16,12 +16,16 @@ func NewOrderRepo(db *gorm.DB) *OrderRepo {
 }
 
 type Invoice struct {
-	MerchantID   uuid.UUID
-	UserID       uuid.UUID
-	Total        uint64
-	Fee          uint64
-	TotalPayment uint64
-	Details      []*InvoiceDetails
+	OderID         uuid.UUID
+	MerchantID     uuid.UUID
+	UserID         uuid.UUID
+	Total          uint64
+	Fee            uint64
+	TotalPayment   uint64
+	PaymentAction  string
+	PaymentChannel string
+	PaymentResult  interface{}
+	Details        []*InvoiceDetails
 }
 
 type InvoiceDetails struct {

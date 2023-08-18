@@ -9,13 +9,16 @@ import (
 )
 
 type Config struct {
+	IS_PRODUCTION         bool          `mapstructure:"ENV"`
 	TokenSecretKey        string        `mapstructure:"TOKEN_SECRET_KEY"`
 	HTTPServerPort        string        `mapstructure:"HTTP_SERVER_PORT"`
 	TokenDuration         time.Duration `mapstructure:"TOKEN_DURATION"`
 	RefreshTokenSecretKey string        `mapstructure:"REFRESH_TOKEN_SECRET_KEY"`
 	TokenRefreshDuration  time.Duration `mapstructure:"TOKEN_REFRESH_DURATION"`
 	DSN                   string        `mapstructure:"DSN"`
-	OderFee               uint64        `mapstructure:"ORDER_FEE"`
+	OrderFee              uint64        `mapstructure:"ORDER_FEE"`
+	MidtransClientKey     string        `mapstructure:"MIDTRANS_CLIENT_KEY"`
+	MidtransServerKey     string        `mapstructure:"MIDTRANS_SERVER_KEY"`
 }
 
 func LoadConfig(path string) (config Config, err error) {
