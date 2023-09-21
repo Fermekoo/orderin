@@ -1,4 +1,4 @@
-package repositories
+package models
 
 import (
 	"time"
@@ -13,6 +13,8 @@ type Order struct {
 	Total        uint64
 	Fee          uint64
 	TotalPayment uint64
+	Payment      *PaymentOrder `json:",omitempty" gorm:"-,foreignkey:OrderID"`
+	Details      []*OrderDetail
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }

@@ -1,40 +1,32 @@
 package services
 
 import (
+	"github.com/Fermekoo/orderin-api/domains"
 	"github.com/Fermekoo/orderin-api/repositories"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
-type CategoryService struct {
-	categoriesRepo *repositories.CategoriesRepo
+type categoryService struct {
+	categoriesRepo domains.CategoriesRepo
 }
 
-func NewCategoryService(db *gorm.DB) *CategoryService {
+func NewCategoryService(db *gorm.DB) domains.CategoryService {
 	categoriesRepo := repositories.NewCategoriesRepo(db)
 
-	return &CategoryService{
+	return &categoryService{
 		categoriesRepo: categoriesRepo,
 	}
 }
 
-type CategoryResponse struct {
-	ID         uuid.UUID `json:"id"`
-	Category   string    `json:"category"`
-	MerchantID uuid.UUID `json:"merchantId"`
-	Merchant   string    `json:"merchant"`
-	Image      string    `json:"image"`
-}
-
-func (service *CategoryService) Categories() ([]CategoryResponse, error) {
-	var result = []CategoryResponse{}
+func (service *categoryService) Categories() ([]domains.CategoryResponse, error) {
+	var result = []domains.CategoryResponse{}
 	categories, err := service.categoriesRepo.GetAll()
 	if err != nil {
 		return result, err
 	}
 
 	for _, cat := range categories {
-		category := CategoryResponse{
+		category := domains.CategoryResponse{
 			ID:         cat.ID,
 			Category:   cat.Category,
 			MerchantID: cat.MerchantID,

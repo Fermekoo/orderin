@@ -3,17 +3,17 @@ package handler
 import (
 	"net/http"
 
-	"github.com/Fermekoo/orderin-api/services"
+	"github.com/Fermekoo/orderin-api/domains"
 	"github.com/Fermekoo/orderin-api/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 type ProductHandler struct {
-	service *services.ProductService
+	service domains.ProductService
 }
 
-func NewProductHandler(service *services.ProductService) *ProductHandler {
+func NewProductHandler(service domains.ProductService) *ProductHandler {
 	return &ProductHandler{
 		service: service,
 	}

@@ -1,41 +1,31 @@
 package services
 
 import (
+	"github.com/Fermekoo/orderin-api/db/models"
+	"github.com/Fermekoo/orderin-api/domains"
 	"github.com/Fermekoo/orderin-api/repositories"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
-type ProductService struct {
-	productRepo *repositories.ProductRepo
+type productService struct {
+	productRepo domains.ProductRepo
 }
 
-func NewProductService(db *gorm.DB) *ProductService {
+func NewProductService(db *gorm.DB) domains.ProductService {
 	productRepo := repositories.NewProductRepo(db)
 
-	return &ProductService{
+	return &productService{
 		productRepo: productRepo,
 	}
 }
 
-type ProductResponse struct {
-	ID          uuid.UUID `json:"id"`
-	CategoryID  uuid.UUID `json:"categoryId"`
-	Category    string    `json:"category"`
-	Title       string    `json:"title"`
-	Price       uint64    `json:"price"`
-	Description string    `json:"description"`
-	Image       string    `json:"image"`
-	Size        uint64    `json:"size"`
-	Color       string    `json:"color"`
-}
-
-func productResponses(products []repositories.Product) ([]ProductResponse, error) {
-	var result = []ProductResponse{}
+func productResponses(products []models.Product) ([]domains.ProductResponse, error) {
+	var result = []domains.ProductResponse{}
 
 	for _, p := range products {
-		product := ProductResponse{
+		product := domains.ProductResponse{
 			ID:          p.ID,
 			CategoryID:  p.CategoryID,
 			Category:    p.Category.Category,
@@ -51,7 +41,7 @@ func productResponses(products []repositories.Product) ([]ProductResponse, error
 	}
 	return result, nil
 }
-func (service *ProductService) Products(ctx *gin.Context) ([]ProductResponse, error) {
+func (service *productService) Products(ctx *gin.Context) ([]domains.ProductResponse, error) {
 	categoryId, CategoryIdExists := ctx.GetQuery("category")
 	if CategoryIdExists && categoryId != "" {
 
@@ -69,8 +59,8 @@ func (service *ProductService) Products(ctx *gin.Context) ([]ProductResponse, er
 	}
 }
 
-func (service *ProductService) Product(productId uuid.UUID) (ProductResponse, error) {
-	var result = ProductResponse{}
+func (service *productService) Product(productId uuid.UUID) (domains.ProductResponse, error) {
+	var result = domains.ProductResponse{}
 	product, err := service.productRepo.FindById(productId)
 	if err != nil {
 		return result, err
@@ -87,7 +77,7 @@ func (service *ProductService) Product(productId uuid.UUID) (ProductResponse, er
 	return result, nil
 }
 
-func (service *ProductService) ProductByCategory(categoryId string) ([]ProductResponse, error) {
+func (service *productService) ProductByCategory(categoryId string) ([]domains.ProductResponse, error) {
 	products, err := service.productRepo.GetProductByCategoryId(categoryId)
 
 	if err != nil {

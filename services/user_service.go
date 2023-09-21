@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Fermekoo/orderin-api/db/models"
+	"github.com/Fermekoo/orderin-api/domains"
 	"github.com/Fermekoo/orderin-api/repositories"
 	"github.com/Fermekoo/orderin-api/utils"
 	"github.com/Fermekoo/orderin-api/utils/token"
@@ -13,18 +15,18 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserService struct {
+type userService struct {
 	config      utils.Config
-	userRepo    *repositories.UserRepo
-	sessionRepo *repositories.SessionRepo
+	userRepo    domains.UserRepo
+	sessionRepo domains.SessionRepo
 	tokenMaker  token.TokenMaker
 }
 
-func NewUserService(config utils.Config, db *gorm.DB, tokenMaker token.TokenMaker) *UserService {
+func NewUserService(config utils.Config, db *gorm.DB, tokenMaker token.TokenMaker) domains.UserService {
 	userRepo := repositories.NewUserRepo(db)
 	sessionRepo := repositories.NewSessionRepo(db)
 
-	return &UserService{
+	return &userService{
 		config:      config,
 		userRepo:    userRepo,
 		sessionRepo: sessionRepo,
@@ -32,41 +34,14 @@ func NewUserService(config utils.Config, db *gorm.DB, tokenMaker token.TokenMake
 	}
 }
 
-type RegisterRequest struct {
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required,min=6"`
-	Fullname string `json:"fullname" binding:"required"`
-	Phone    string `json:"phone" binding:"required"`
-}
-
-type AuthResponse struct {
-	Token *TokenResponse `json:"token"`
-}
-
-type UserResponse struct {
-	ID       uuid.UUID `json:"id"`
-	Fullname string    `json:"fullname"`
-	Email    string    `json:"email"`
-	Phone    string    `json:"phone"`
-}
-
-type TokenResponse struct {
-	SessionID             uuid.UUID `json:"sessionId"`
-	AccessToken           string    `json:"accessToken"`
-	IssuedAt              time.Time `json:"issuedAt"`
-	ExpiredAt             time.Time `json:"createdAt"`
-	RefreshToken          string    `json:"refreshToken"`
-	RefreshTokenExpiresAt time.Time `json:"refreshTokenExpiresAt"`
-}
-
-func (service *UserService) Register(ctx *gin.Context, payload *RegisterRequest) (AuthResponse, error) {
-	var result AuthResponse
+func (service *userService) Register(ctx *gin.Context, payload *domains.RegisterRequest) (domains.AuthResponse, error) {
+	var result domains.AuthResponse
 	hashedPassword, err := utils.HashPassword(payload.Password)
 	if err != nil {
 		return result, err
 	}
 	userID, _ := uuid.NewRandom()
-	inserData := &repositories.User{
+	inserData := &models.User{
 		ID:       userID,
 		Email:    payload.Email,
 		Password: hashedPassword,
@@ -87,7 +62,7 @@ func (service *UserService) Register(ctx *gin.Context, payload *RegisterRequest)
 		return result, err
 	}
 
-	sessionInsertData := &repositories.Session{
+	sessionInsertData := &models.Session{
 		ID:           refreshPayload.ID,
 		UserId:       refreshPayload.UserID,
 		RefreshToken: refreshToken,
@@ -106,13 +81,8 @@ func (service *UserService) Register(ctx *gin.Context, payload *RegisterRequest)
 	return result, nil
 }
 
-type LoginRequest struct {
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
-}
-
-func (service *UserService) Login(ctx *gin.Context, payload *LoginRequest) (AuthResponse, error) {
-	var result AuthResponse
+func (service *userService) Login(ctx *gin.Context, payload *domains.LoginRequest) (domains.AuthResponse, error) {
+	var result domains.AuthResponse
 	user, err := service.userRepo.FindByField("email", payload.Email)
 	if err != nil {
 		return result, err
@@ -133,7 +103,7 @@ func (service *UserService) Login(ctx *gin.Context, payload *LoginRequest) (Auth
 		return result, err
 	}
 
-	sessionInsertData := &repositories.Session{
+	sessionInsertData := &models.Session{
 		ID:           refreshPayload.ID,
 		UserId:       refreshPayload.UserID,
 		RefreshToken: refreshToken,
@@ -152,8 +122,8 @@ func (service *UserService) Login(ctx *gin.Context, payload *LoginRequest) (Auth
 	return result, nil
 }
 
-func (service *UserService) Profile(ctx *gin.Context) (UserResponse, error) {
-	var userResponse UserResponse
+func (service *userService) Profile(ctx *gin.Context) (domains.UserResponse, error) {
+	var userResponse domains.UserResponse
 	authUser := ctx.MustGet(utils.AUTH_PAYLOAD_KEY).(*token.Payload)
 	user, err := service.userRepo.FindByField("id", authUser.UserID)
 	if err != nil {
@@ -166,12 +136,8 @@ func (service *UserService) Profile(ctx *gin.Context) (UserResponse, error) {
 	return userResponse, nil
 }
 
-type RenewAccessToken struct {
-	RefreshToken string `json:"refresh_token"`
-}
-
-func (service *UserService) RenewAccessToken(ctx *gin.Context, payload *RenewAccessToken) (AuthResponse, error) {
-	var result AuthResponse
+func (service *userService) RenewAccessToken(ctx *gin.Context, payload *domains.RenewAccessToken) (domains.AuthResponse, error) {
+	var result domains.AuthResponse
 
 	refreshPayload, err := service.tokenMaker.VerifyToken(service.config.RefreshTokenSecretKey, payload.RefreshToken)
 	if err != nil {
@@ -204,9 +170,9 @@ func (service *UserService) RenewAccessToken(ctx *gin.Context, payload *RenewAcc
 	return result, nil
 }
 
-func generateAuthResponse(token string, tokenPayload *token.Payload, refreshToken string, refreshPayload *token.Payload, session *repositories.Session) *AuthResponse {
-	return &AuthResponse{
-		Token: &TokenResponse{
+func generateAuthResponse(token string, tokenPayload *token.Payload, refreshToken string, refreshPayload *token.Payload, session *models.Session) *domains.AuthResponse {
+	return &domains.AuthResponse{
+		Token: &domains.TokenResponse{
 			SessionID:             session.ID,
 			AccessToken:           token,
 			IssuedAt:              tokenPayload.IssuedAt,

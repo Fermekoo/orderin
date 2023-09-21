@@ -3,16 +3,16 @@ package handler
 import (
 	"net/http"
 
-	"github.com/Fermekoo/orderin-api/services"
+	"github.com/Fermekoo/orderin-api/domains"
 	"github.com/Fermekoo/orderin-api/utils"
 	"github.com/gin-gonic/gin"
 )
 
 type Categoryhandler struct {
-	service *services.CategoryService
+	service domains.CategoryService
 }
 
-func NewCategoryHandler(service *services.CategoryService) *Categoryhandler {
+func NewCategoryHandler(service domains.CategoryService) *Categoryhandler {
 	return &Categoryhandler{
 		service: service,
 	}

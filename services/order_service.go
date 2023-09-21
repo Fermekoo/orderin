@@ -1,8 +1,10 @@
 package services
 
 import (
-	"log"
+	"errors"
 
+	"github.com/Fermekoo/orderin-api/db/models"
+	"github.com/Fermekoo/orderin-api/domains"
 	"github.com/Fermekoo/orderin-api/payment"
 	"github.com/Fermekoo/orderin-api/repositories"
 	"github.com/Fermekoo/orderin-api/utils"
@@ -11,40 +13,39 @@ import (
 	"gorm.io/gorm"
 )
 
-type OrderService struct {
+type orderService struct {
 	config    utils.Config
-	orderRepo *repositories.OrderRepo
-	cartRepo  *repositories.CartRepo
+	orderRepo domains.OrderRepo
+	cartRepo  domains.CartRepo
 }
 
-func NewOrderService(config utils.Config, db *gorm.DB) *OrderService {
+func NewOrderService(config utils.Config, db *gorm.DB) domains.OrderService {
 	orderRepo := repositories.NewOrderRepo(db)
 	cartRepo := repositories.NewCartRepo(db)
 
-	return &OrderService{
+	return &orderService{
 		config:    config,
 		orderRepo: orderRepo,
 		cartRepo:  cartRepo,
 	}
 }
 
-type AddInvoice struct {
-	CartItems      []uuid.UUID `json:"cartItems" binding:"required,dive"`
-	PaymentChannel string      `json:"paymentChannel" binding:"required"`
-}
-
-func (service *OrderService) CreateInvoice(ctx *gin.Context, payloads AddInvoice) interface{} {
+func (service *orderService) CreateInvoice(ctx *gin.Context, payloads domains.AddInvoice) error {
 	authUser := getAuthUser(ctx)
 	carts, err := service.cartRepo.GetSelectedItems(authUser.UserID, payloads.CartItems)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	groupedMap := make(map[uuid.UUID]*repositories.Invoice)
+	if len(carts) < 1 {
+		return errors.New("your cart is empty")
+	}
+
+	groupedMap := make(map[uuid.UUID]*models.Order)
 
 	for _, c := range carts {
-		item := repositories.InvoiceDetails{
-			CartID:    c.ID,
+		item := &models.OrderDetail{
+			ID:        c.ID,
 			ProductID: c.ProductID,
 			Quantity:  c.Quantity,
 			Price:     c.Product.Price,
@@ -53,44 +54,59 @@ func (service *OrderService) CreateInvoice(ctx *gin.Context, payloads AddInvoice
 
 		if merchant, exists := groupedMap[c.Product.Category.MerchantID]; exists {
 			merchant.MerchantID = c.Product.Category.MerchantID
-			merchant.UserID = authUser.UserID
 			merchant.Total += item.Total
 			merchant.Fee = service.config.OrderFee
 			merchant.TotalPayment = merchant.Total + merchant.Fee
-			merchant.Details = append(merchant.Details, &item)
+			merchant.Details = append(merchant.Details, item)
 			groupedMap[c.Product.Category.MerchantID] = merchant
 		} else {
-			groupedMap[c.Product.Category.MerchantID] = &repositories.Invoice{
+			groupedMap[c.Product.Category.MerchantID] = &models.Order{
 				MerchantID:   c.Product.Category.MerchantID,
-				UserID:       authUser.UserID,
 				Total:        item.Total,
 				Fee:          service.config.OrderFee,
 				TotalPayment: item.Total + service.config.OrderFee,
-				Details:      []*repositories.InvoiceDetails{&item},
+				Details:      []*models.OrderDetail{item},
 			}
 		}
 	}
 
-	var groupedInvoicesByMerchant []*repositories.Invoice
+	var groupedInvoicesByMerchant []*models.Order
 	for _, merchant := range groupedMap {
 		orderID, err := uuid.NewRandom()
 		if err != nil {
 			return err
 		}
-		merchant.OderID = orderID
-		paymentVendor := payment.NewMidtrans(service.config)
+		merchant.ID = orderID
+		paymentVendor, err := payment.NewPayment(service.config)
+		if err != nil {
+			return err
+		}
+
 		payloadsPayment := &payment.CreatePayment{
-			OrderID: merchant.OderID,
+			OrderID: merchant.ID,
 			Bank:    payloads.PaymentChannel,
 			Amount:  int(merchant.TotalPayment),
 		}
 
 		orderPayment, _ := paymentVendor.Pay(payloadsPayment)
-
-		merchant.PaymentResult = orderPayment
+		merchant.UserID = authUser.UserID
+		paymentOrderId, err := uuid.NewRandom()
+		if err != nil {
+			return err
+		}
+		merchant.Payment = &models.PaymentOrder{
+			ID:            paymentOrderId,
+			OrderID:       orderID,
+			Vendor:        orderPayment.PaymentVendor,
+			Channel:       orderPayment.PaymentChannel,
+			Total:         merchant.TotalPayment,
+			PaymentFee:    0,
+			PaymentStatus: payment.OrderPending,
+			PaymentAction: orderPayment.PaymentAction,
+			Type:          orderPayment.Type,
+		}
 		groupedInvoicesByMerchant = append(groupedInvoicesByMerchant, merchant)
 	}
-	return groupedInvoicesByMerchant
 	err = service.orderRepo.Create(groupedInvoicesByMerchant)
 	return err
 }

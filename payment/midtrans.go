@@ -5,17 +5,17 @@ import (
 	"fmt"
 
 	"github.com/Fermekoo/orderin-api/utils"
+	"github.com/google/uuid"
 	"github.com/midtrans/midtrans-go"
 	"github.com/midtrans/midtrans-go/coreapi"
 )
 
 type MidtransPayment struct {
-	Payment
 }
 
 var mdCore coreapi.Client
 
-func NewMidtrans(config utils.Config) *MidtransPayment {
+func NewMidtrans(config utils.Config) Payment {
 	var env midtrans.EnvironmentType
 	if config.IS_PRODUCTION {
 		env = midtrans.Production
@@ -27,14 +27,21 @@ func NewMidtrans(config utils.Config) *MidtransPayment {
 	return &MidtransPayment{}
 }
 
-func (m *MidtransPayment) Pay(payloads *CreatePayment) (interface{}, error) {
+func (m *MidtransPayment) Pay(payloads *CreatePayment) (*ResponsePayment, error) {
 
+	var result *ResponsePayment
 	response, err := mdCore.ChargeTransaction(requestFormated(payloads))
 	if err != nil {
-		return nil, err
+		return result, err
 	}
 
 	return responseFormatted(response)
+}
+
+func (m *MidtransPayment) Inquiry(orderId uuid.UUID) (*ResponsePayment, error) {
+	var result *ResponsePayment
+
+	return result, nil
 }
 
 func requestFormated(payloads *CreatePayment) *coreapi.ChargeReq {
@@ -88,10 +95,10 @@ func requestFormated(payloads *CreatePayment) *coreapi.ChargeReq {
 	return chargeReq
 }
 
-func responseFormatted(response *coreapi.ChargeResponse) (ResponsePayment, error) {
+func responseFormatted(response *coreapi.ChargeResponse) (*ResponsePayment, error) {
 	var result ResponsePayment
 	if response.StatusCode != "201" {
-		return result, errors.New(response.StatusMessage)
+		return &result, errors.New(response.StatusMessage)
 	}
 
 	result.TransactionID = response.TransactionID
@@ -102,22 +109,24 @@ func responseFormatted(response *coreapi.ChargeResponse) (ResponsePayment, error
 
 	switch response.PaymentType {
 	case "bank_transfer":
-		result.PaymentType = response.PaymentType
+		result.PaymentChannel = response.PaymentType
 		if response.VaNumbers != nil {
-			result.PaymentType = response.VaNumbers[0].Bank
+			result.PaymentChannel = response.VaNumbers[0].Bank
 			result.PaymentAction = response.VaNumbers[0].VANumber
 		} else if response.PermataVaNumber != "" {
 			result.PaymentAction = response.PermataVaNumber
-			result.PaymentType = "permata"
+			result.PaymentChannel = "permata"
 		}
+		result.Type = "va_number"
 	case "echannel":
-		result.PaymentType = "mandiri"
+		result.PaymentChannel = "mandiri"
 		result.PaymentAction = fmt.Sprintf("%s%s", response.BillerCode, response.BillKey)
 	case "gopay", "shopeepay":
-		result.PaymentType = "gopay"
+		result.PaymentChannel = "gopay"
+		result.Type = "dedplink"
 		result.PaymentAction = response.Actions[1].URL
 	}
 
-	return result, nil
+	return &result, nil
 
 }

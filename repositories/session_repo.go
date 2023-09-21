@@ -3,26 +3,28 @@ package repositories
 import (
 	"fmt"
 
+	"github.com/Fermekoo/orderin-api/db/models"
+	"github.com/Fermekoo/orderin-api/domains"
 	"gorm.io/gorm"
 )
 
-type SessionRepo struct {
+type sessionRepo struct {
 	db *gorm.DB
 }
 
-func NewSessionRepo(db *gorm.DB) *SessionRepo {
-	return &SessionRepo{
+func NewSessionRepo(db *gorm.DB) domains.SessionRepo {
+	return &sessionRepo{
 		db: db,
 	}
 }
 
-func (repo *SessionRepo) Create(payload *Session) (Session, error) {
+func (repo *sessionRepo) Create(payload *models.Session) (models.Session, error) {
 	err := repo.db.Create(&payload).Error
 	return *payload, err
 }
 
-func (repo *SessionRepo) FindByField(field string, value interface{}) (Session, error) {
-	var session Session
+func (repo *sessionRepo) FindByField(field string, value interface{}) (models.Session, error) {
+	var session models.Session
 	field = fmt.Sprintf("%s = ?", field)
 	err := repo.db.First(&session, field, value).Error
 

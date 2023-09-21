@@ -3,23 +3,23 @@ package handler
 import (
 	"net/http"
 
-	"github.com/Fermekoo/orderin-api/services"
+	"github.com/Fermekoo/orderin-api/domains"
 	"github.com/Fermekoo/orderin-api/utils"
 	"github.com/gin-gonic/gin"
 )
 
 type UserHandler struct {
-	service *services.UserService
+	service domains.UserService
 }
 
-func NewUserHandler(service *services.UserService) *UserHandler {
+func NewUserHandler(service domains.UserService) *UserHandler {
 	return &UserHandler{
 		service: service,
 	}
 }
 
 func (handler *UserHandler) Register(ctx *gin.Context) {
-	var request services.RegisterRequest
+	var request domains.RegisterRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, err))
 		return
@@ -35,7 +35,7 @@ func (handler *UserHandler) Register(ctx *gin.Context) {
 }
 
 func (handler *UserHandler) Login(ctx *gin.Context) {
-	var request services.LoginRequest
+	var request domains.LoginRequest
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, err))
 		return
@@ -61,7 +61,7 @@ func (handler *UserHandler) Profile(ctx *gin.Context) {
 }
 
 func (handler *UserHandler) RefreshToken(ctx *gin.Context) {
-	var request services.RenewAccessToken
+	var request domains.RenewAccessToken
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, err))
 		return

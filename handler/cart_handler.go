@@ -3,23 +3,23 @@ package handler
 import (
 	"net/http"
 
-	"github.com/Fermekoo/orderin-api/services"
+	"github.com/Fermekoo/orderin-api/domains"
 	"github.com/Fermekoo/orderin-api/utils"
 	"github.com/gin-gonic/gin"
 )
 
 type CartHandler struct {
-	service *services.CartService
+	service domains.CartService
 }
 
-func NewCartHandler(service *services.CartService) *CartHandler {
+func NewCartHandler(service domains.CartService) *CartHandler {
 	return &CartHandler{
 		service: service,
 	}
 }
 
 func (handler *CartHandler) AddCart(ctx *gin.Context) {
-	var request services.AddCart
+	var request domains.AddCart
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, err))
 		return
@@ -45,7 +45,7 @@ func (handler *CartHandler) GetAll(ctx *gin.Context) {
 }
 
 func (handler *CartHandler) UpdateQty(ctx *gin.Context) {
-	var request services.UpdateQty
+	var request domains.UpdateQty
 	if err := ctx.ShouldBindJSON(&request); err != nil {
 		ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, err))
 		return

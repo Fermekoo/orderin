@@ -19,6 +19,7 @@ type Config struct {
 	OrderFee              uint64        `mapstructure:"ORDER_FEE"`
 	MidtransClientKey     string        `mapstructure:"MIDTRANS_CLIENT_KEY"`
 	MidtransServerKey     string        `mapstructure:"MIDTRANS_SERVER_KEY"`
+	PaymentVendor         string        `mapstructure:"PAYMENT_VENDOR"`
 }
 
 func LoadConfig(path string) (config Config, err error) {

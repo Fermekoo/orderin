@@ -29,6 +29,13 @@ func NewApiServer(config utils.Config) (*ApiServer, error) {
 
 func (server *ApiServer) setupRouter() {
 	router := gin.Default()
+	router.Use(func(c *gin.Context) {
+		ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+		defer cancel()
+		c.Request = c.Request.WithContext(ctx)
+		c.Next()
+	})
+
 	router.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{
 			"message": "orderin-api api",

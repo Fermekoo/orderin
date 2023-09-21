@@ -1,19 +1,23 @@
 package repositories
 
-import "gorm.io/gorm"
+import (
+	"github.com/Fermekoo/orderin-api/db/models"
+	"github.com/Fermekoo/orderin-api/domains"
+	"gorm.io/gorm"
+)
 
-type CategoriesRepo struct {
+type categoriesRepo struct {
 	db *gorm.DB
 }
 
-func NewCategoriesRepo(db *gorm.DB) *CategoriesRepo {
-	return &CategoriesRepo{
+func NewCategoriesRepo(db *gorm.DB) domains.CategoriesRepo {
+	return &categoriesRepo{
 		db: db,
 	}
 }
 
-func (repo *CategoriesRepo) GetAll() ([]Categories, error) {
-	var categories []Categories
+func (repo *categoriesRepo) GetAll() ([]models.Categories, error) {
+	var categories []models.Categories
 
 	err := repo.db.Find(&categories).Error
 
