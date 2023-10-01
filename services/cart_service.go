@@ -57,12 +57,12 @@ func (service *cartService) Add(ctx *gin.Context, payload *domains.AddCart) erro
 }
 
 func (service *cartService) GetAll(ctx *gin.Context) ([]domains.CartResponse, error) {
-	var result []domains.CartResponse
+	var groupedMerchants []domains.CartResponse
 
 	authUser := getAuthUser(ctx)
 	carts, err := service.cartRepo.GetAll(authUser.UserID)
 	if err != nil {
-		return result, err
+		return groupedMerchants, err
 	}
 
 	groupedMap := make(map[uuid.UUID]domains.CartResponse)
@@ -90,7 +90,6 @@ func (service *cartService) GetAll(ctx *gin.Context) ([]domains.CartResponse, er
 		}
 	}
 
-	var groupedMerchants []domains.CartResponse
 	for _, merchant := range groupedMap {
 		groupedMerchants = append(groupedMerchants, merchant)
 	}
