@@ -12,7 +12,7 @@ type AddInvoice struct {
 }
 
 type OrderService interface {
-	CreateInvoice(ctx *gin.Context, payloads AddInvoice) interface{}
+	CreateInvoice(ctx *gin.Context, payloads AddInvoice) error
 }
 
 type OrderRepo interface {

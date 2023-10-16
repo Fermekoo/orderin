@@ -31,7 +31,7 @@ func NewOrderService(config utils.Config, db *gorm.DB) domains.OrderService {
 	}
 }
 
-func (service *orderService) CreateInvoice(ctx *gin.Context, payloads domains.AddInvoice) interface{} {
+func (service *orderService) CreateInvoice(ctx *gin.Context, payloads domains.AddInvoice) error {
 	authUser := getAuthUser(ctx)
 	carts, err := service.cartRepo.GetSelectedItems(authUser.UserID, payloads.CartItems)
 	if err != nil {
