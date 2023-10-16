@@ -12,9 +12,9 @@ type AddInvoice struct {
 }
 
 type OrderService interface {
-	CreateInvoice(ctx *gin.Context, payloads AddInvoice) error
+	CreateInvoice(ctx *gin.Context, payloads AddInvoice) interface{}
 }
 
 type OrderRepo interface {
-	Create(payloads []*models.Order) error
+	Create(payloads *models.Checkout) error
 }

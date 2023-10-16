@@ -7,14 +7,13 @@ import (
 )
 
 type Order struct {
-	ID           uuid.UUID `gorm:"primaryKey" json:"id"`
-	UserID       uuid.UUID
+	ID           uuid.UUID `gorm:"type:uuid,primaryKey;default:gen_random_uuid()" json:"id"`
+	CheckoutID   uuid.UUID
 	MerchantID   uuid.UUID
 	Total        uint64
 	Fee          uint64
 	TotalPayment uint64
-	Payment      *PaymentOrder `json:",omitempty" gorm:"-,foreignkey:OrderID"`
-	Details      []*OrderDetail
+	Details      []*OrderDetail `json:",omitempty"`
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }

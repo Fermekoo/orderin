@@ -5,7 +5,7 @@ CREATE TABLE orders (
     fee INT(11) DEFAULT 0,
     total_payment INT(11) DEFAULT 0 COMMENT "total + fee",
     created_at DATETIME NOT NULL DEFAULT NOW(),
-    updated_at DATETIME On UPDATE NOW(),
+    updated_at DATETIME ON UPDATE NOW(),
     PRIMARY KEY(id),
     INDEX(user_id)
 );

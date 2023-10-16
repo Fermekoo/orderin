@@ -9,9 +9,9 @@ import (
 type OrderDetail struct {
 	ID        uuid.UUID `gorm:"primaryKey" json:"id"`
 	OrderID   uuid.UUID
-	Order     Order `gorm:"foreignKey:OrderID"`
+	Order     Order `gorm:"foreignKey:OrderID" json:",omitempty"`
 	ProductID uuid.UUID
-	Product   Product `gorm:"foreignKey:ProductID"`
+	Product   Product `gorm:"foreignKey:ProductID" json:",omitempty"`
 	Quantity  uint32
 	Price     uint64
 	Total     uint64

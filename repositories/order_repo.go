@@ -3,6 +3,7 @@ package repositories
 import (
 	"github.com/Fermekoo/orderin-api/db/models"
 	"github.com/Fermekoo/orderin-api/domains"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -16,13 +17,20 @@ func NewOrderRepo(db *gorm.DB) domains.OrderRepo {
 	}
 }
 
-func (repo *orderRepo) Create(payloads []*models.Order) error {
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
-		for _, invoice := range payloads {
+func (repo *orderRepo) Create(checkout *models.Checkout) error {
 
+	orders := checkout.Order
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
+
+		if err := tx.Omit("Order").Create(&checkout).Error; err != nil {
+			return err
+		}
+
+		for _, invoice := range orders {
+			orderId := uuid.New()
 			order := &models.Order{
-				ID:           invoice.ID,
-				UserID:       invoice.UserID,
+				ID:           orderId,
+				CheckoutID:   checkout.ID,
 				MerchantID:   invoice.MerchantID,
 				Total:        invoice.Total,
 				Fee:          invoice.Fee,
@@ -37,7 +45,7 @@ func (repo *orderRepo) Create(payloads []*models.Order) error {
 
 				orderDetail := &models.OrderDetail{
 					ID:        detail.ID,
-					OrderID:   invoice.ID,
+					OrderID:   orderId,
 					ProductID: detail.ProductID,
 					Quantity:  detail.Quantity,
 					Price:     detail.Price,
@@ -47,6 +55,7 @@ func (repo *orderRepo) Create(payloads []*models.Order) error {
 				if err := tx.Create(orderDetail).Error; err != nil {
 					return err
 				}
+
 				if err := tx.Table("products").Where("id = ?", detail.ProductID).Update("stock", gorm.Expr("stock - ?", detail.Quantity)).Error; err != nil {
 					return err
 				}
@@ -55,11 +64,6 @@ func (repo *orderRepo) Create(payloads []*models.Order) error {
 					return err
 				}
 			}
-
-			if err := tx.Create(&invoice.Payment).Error; err != nil {
-				return err
-			}
-
 		}
 
 		return nil

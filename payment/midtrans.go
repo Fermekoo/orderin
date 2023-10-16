@@ -123,7 +123,7 @@ func responseFormatted(response *coreapi.ChargeResponse) (*ResponsePayment, erro
 		result.PaymentAction = fmt.Sprintf("%s%s", response.BillerCode, response.BillKey)
 	case "gopay", "shopeepay":
 		result.PaymentChannel = "gopay"
-		result.Type = "dedplink"
+		result.Type = "deeplink"
 		result.PaymentAction = response.Actions[1].URL
 	}
 

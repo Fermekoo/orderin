@@ -31,7 +31,7 @@ func NewOrderService(config utils.Config, db *gorm.DB) domains.OrderService {
 	}
 }
 
-func (service *orderService) CreateInvoice(ctx *gin.Context, payloads domains.AddInvoice) error {
+func (service *orderService) CreateInvoice(ctx *gin.Context, payloads domains.AddInvoice) interface{} {
 	authUser := getAuthUser(ctx)
 	carts, err := service.cartRepo.GetSelectedItems(authUser.UserID, payloads.CartItems)
 	if err != nil {
@@ -43,8 +43,8 @@ func (service *orderService) CreateInvoice(ctx *gin.Context, payloads domains.Ad
 	}
 
 	var wgCarts sync.WaitGroup
+	var mu sync.Mutex
 	groupedMap := make(map[uuid.UUID]*models.Order)
-
 	for _, c := range carts {
 		wgCarts.Add(1)
 		go func(c models.Cart) {
@@ -62,9 +62,12 @@ func (service *orderService) CreateInvoice(ctx *gin.Context, payloads domains.Ad
 				merchant.Total += item.Total
 				merchant.Fee = service.config.OrderFee
 				merchant.TotalPayment = merchant.Total + merchant.Fee
+				mu.Lock()
 				merchant.Details = append(merchant.Details, item)
+				mu.Unlock()
 				groupedMap[c.Product.Category.MerchantID] = merchant
 			} else {
+				mu.Lock()
 				groupedMap[c.Product.Category.MerchantID] = &models.Order{
 					MerchantID:   c.Product.Category.MerchantID,
 					Total:        item.Total,
@@ -72,6 +75,7 @@ func (service *orderService) CreateInvoice(ctx *gin.Context, payloads domains.Ad
 					TotalPayment: item.Total + service.config.OrderFee,
 					Details:      []*models.OrderDetail{item},
 				}
+				mu.Unlock()
 			}
 		}(c)
 	}
@@ -79,60 +83,49 @@ func (service *orderService) CreateInvoice(ctx *gin.Context, payloads domains.Ad
 	wgCarts.Wait()
 
 	var groupedInvoicesByMerchant []*models.Order
-
-	var wgInvoice sync.WaitGroup
-
-	errCh := make(chan error, 1)
+	var totalCheckout uint64
+	var totalFeeCheckout uint64
 	for _, merchant := range groupedMap {
-		wgInvoice.Add(1)
-		go func(merchant *models.Order) {
-			defer wgInvoice.Done()
-			orderID, err := uuid.NewRandom()
-			if err != nil {
-				errCh <- err
-			}
-			merchant.ID = orderID
-			paymentVendor, err := payment.NewPayment(service.config)
-			if err != nil {
-				errCh <- err
-			}
-
-			payloadsPayment := &payment.CreatePayment{
-				OrderID: merchant.ID,
-				Bank:    payloads.PaymentChannel,
-				Amount:  int(merchant.TotalPayment),
-			}
-
-			orderPayment, _ := paymentVendor.Pay(payloadsPayment)
-			merchant.UserID = authUser.UserID
-			paymentOrderId, err := uuid.NewRandom()
-			if err != nil {
-				errCh <- err
-			}
-			merchant.Payment = &models.PaymentOrder{
-				ID:            paymentOrderId,
-				OrderID:       orderID,
-				Vendor:        orderPayment.PaymentVendor,
-				Channel:       orderPayment.PaymentChannel,
-				Total:         merchant.TotalPayment,
-				PaymentFee:    0,
-				PaymentStatus: payment.OrderPending,
-				PaymentAction: orderPayment.PaymentAction,
-				Type:          orderPayment.Type,
-			}
-			groupedInvoicesByMerchant = append(groupedInvoicesByMerchant, merchant)
-
-		}(merchant)
+		groupedInvoicesByMerchant = append(groupedInvoicesByMerchant, merchant)
+		totalCheckout += merchant.Total
+		totalFeeCheckout += totalFeeCheckout
 	}
-	wgInvoice.Wait()
-	close(errCh)
 
-	err = <-errCh
+	totalPayment := totalCheckout + totalFeeCheckout
+	paymentVendor, err := payment.NewPayment(service.config)
 	if err != nil {
 		return err
 	}
 
-	err = service.orderRepo.Create(groupedInvoicesByMerchant)
+	checkoutId, err := uuid.NewRandom()
+	if err != nil {
+		return err
+	}
+	paymentPayload := &payment.CreatePayment{
+		OrderID: checkoutId,
+		Bank:    payloads.PaymentChannel,
+		Amount:  int(totalPayment),
+	}
+
+	createPayment, err := paymentVendor.Pay(paymentPayload)
+	if err != nil {
+		return err
+	}
+
+	checkout := &models.Checkout{
+		ID:             checkoutId,
+		UserID:         authUser.UserID,
+		Total:          totalPayment,
+		PaymentVendor:  createPayment.PaymentVendor,
+		PaymentChannel: createPayment.PaymentChannel,
+		PaymentFee:     0,
+		PaymentStatus:  payment.OrderPending,
+		PaymentAction:  createPayment.PaymentAction,
+		Type:           createPayment.Type,
+		Order:          groupedInvoicesByMerchant,
+	}
+
+	err = service.orderRepo.Create(checkout)
 
 	return err
 }

@@ -9,7 +9,7 @@ import (
 type Product struct {
 	ID          uuid.UUID `gorm:"primaryKey" json:"id"`
 	CategoryID  uuid.UUID
-	Category    Categories `gorm:"foreignKey:CategoryID"`
+	Category    Categories `gorm:"foreignKey:CategoryID" json:",omitempty"`
 	Name        string
 	Price       uint64
 	Stock       uint32
