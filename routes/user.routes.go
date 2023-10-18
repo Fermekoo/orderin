@@ -12,7 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func UserRoutes(config utils.Config, routes *gin.RouterGroup) {
+func UserRoutes(config *utils.Config, routes *gin.RouterGroup) {
 	tokenMaker, err := token.NewJWTMaker()
 	if err != nil {
 		log.Fatal("failed to setup token maker %w", err)

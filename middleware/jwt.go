@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func JWTMiddleware(config utils.Config) gin.HandlerFunc {
+func JWTMiddleware(config *utils.Config) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 
 		tokenMaker, err := token.NewJWTMaker()

@@ -14,7 +14,7 @@ func main() {
 		log.Fatal("failed to setup config %w", err)
 	}
 
-	apiServer, err := api.NewApiServer(config)
+	apiServer, err := api.NewApiServer(&config)
 	if err != nil {
 		log.Fatal("cannot start http server")
 	}

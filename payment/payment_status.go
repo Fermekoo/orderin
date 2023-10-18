@@ -8,3 +8,9 @@ const (
 	OrderCancel  OrderPaymentStatus = "cancel"
 	OrderExpired OrderPaymentStatus = "expired"
 )
+
+type PaymentVendor string
+
+const (
+	Midtrans PaymentVendor = "midtrans"
+)

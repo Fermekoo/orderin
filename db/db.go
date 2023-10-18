@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func Connect(config utils.Config) *gorm.DB {
+func Connect(config *utils.Config) *gorm.DB {
 	dsn := config.DSN
 
 	DB, errDB := gorm.Open(mysql.Open(dsn), &gorm.Config{})

@@ -16,13 +16,13 @@ import (
 )
 
 type userService struct {
-	config      utils.Config
+	config      *utils.Config
 	userRepo    domains.UserRepo
 	sessionRepo domains.SessionRepo
 	tokenMaker  token.TokenMaker
 }
 
-func NewUserService(config utils.Config, db *gorm.DB, tokenMaker token.TokenMaker) domains.UserService {
+func NewUserService(config *utils.Config, db *gorm.DB, tokenMaker token.TokenMaker) domains.UserService {
 	userRepo := repositories.NewUserRepo(db)
 	sessionRepo := repositories.NewSessionRepo(db)
 

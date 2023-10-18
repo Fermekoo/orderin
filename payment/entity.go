@@ -14,12 +14,12 @@ type CreatePayment struct {
 }
 
 type ResponsePayment struct {
-	TransactionID   string `json:"transactionId"`
-	OrderID         string `json:"orderId"`
-	PaymentVendor   string `json:"paymentVendor"`
-	PaymentChannel  string `json:"paymentChannel"`
-	Type            string `json:"type"`
-	PaymentAction   string `json:"paymentAction"`
-	Status          string `json:"status"`
-	TransactionTime string `json:"transactionTime"`
+	TransactionID   string             `json:"transactionId"`
+	OrderID         string             `json:"orderId"`
+	PaymentVendor   string             `json:"paymentVendor"`
+	PaymentChannel  string             `json:"paymentChannel"`
+	Type            string             `json:"type"`
+	PaymentAction   string             `json:"paymentAction"`
+	Status          OrderPaymentStatus `json:"status"`
+	TransactionTime string             `json:"transactionTime"`
 }

@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"sync"
+	"time"
 
 	"github.com/Fermekoo/orderin-api/db/models"
 	"github.com/Fermekoo/orderin-api/domains"
@@ -15,12 +16,12 @@ import (
 )
 
 type orderService struct {
-	config    utils.Config
+	config    *utils.Config
 	orderRepo domains.OrderRepo
 	cartRepo  domains.CartRepo
 }
 
-func NewOrderService(config utils.Config, db *gorm.DB) domains.OrderService {
+func NewOrderService(config *utils.Config, db *gorm.DB) domains.OrderService {
 	orderRepo := repositories.NewOrderRepo(db)
 	cartRepo := repositories.NewCartRepo(db)
 
@@ -92,7 +93,7 @@ func (service *orderService) CreateInvoice(ctx *gin.Context, payloads domains.Ad
 	}
 
 	totalPayment := totalCheckout + totalFeeCheckout
-	paymentVendor, err := payment.NewPayment(service.config)
+	paymentVendor, err := payment.NewPayment(service.config, payment.PaymentVendor(service.config.PaymentVendor))
 	if err != nil {
 		return err
 	}
@@ -128,4 +129,42 @@ func (service *orderService) CreateInvoice(ctx *gin.Context, payloads domains.Ad
 	err = service.orderRepo.Create(checkout)
 
 	return err
+}
+
+func (service *orderService) UpdateStatusPayment(ctx *gin.Context, checkoutId uuid.UUID) error {
+
+	checkout, err := service.orderRepo.GetCheckoutById(checkoutId)
+	if err != nil {
+		return err
+	}
+
+	if checkout.PaymentStatus != payment.OrderPending {
+		return errors.New("invoice not pending")
+	}
+
+	pg, err := payment.NewPayment(service.config, payment.PaymentVendor(checkout.PaymentVendor))
+	if err != nil {
+		return err
+	}
+
+	transactions, err := pg.Inquiry(checkout.ID.String())
+	if err != nil {
+		return err
+	}
+
+	if transactions.Status == payment.OrderCancel || transactions.Status == payment.OrderSuccess {
+
+		updatePayload := &domains.UpdateCheckout{
+			CheckoutId: checkout.ID,
+			Status:     transactions.Status,
+		}
+		if transactions.Status == payment.OrderSuccess {
+			updatePayload.SuccessAt = time.Now()
+		}
+
+		err := service.orderRepo.UpdateCheckoutStatus(updatePayload)
+		return err
+	}
+
+	return nil
 }

@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/Fermekoo/orderin-api/utils"
-	"github.com/google/uuid"
 	"github.com/midtrans/midtrans-go"
 	"github.com/midtrans/midtrans-go/coreapi"
 )
@@ -15,7 +14,7 @@ type MidtransPayment struct {
 
 var mdCore coreapi.Client
 
-func NewMidtrans(config utils.Config) Payment {
+func NewMidtrans(config *utils.Config) Payment {
 	var env midtrans.EnvironmentType
 	if config.IS_PRODUCTION {
 		env = midtrans.Production
@@ -38,8 +37,39 @@ func (m *MidtransPayment) Pay(payloads *CreatePayment) (*ResponsePayment, error)
 	return responseFormatted(response)
 }
 
-func (m *MidtransPayment) Inquiry(orderId uuid.UUID) (*ResponsePayment, error) {
-	var result *ResponsePayment
+func (m *MidtransPayment) Inquiry(orderId string) (*ResponsePayment, error) {
+
+	transaction, err := mdCore.CheckTransaction(orderId)
+	if err != nil {
+		return nil, err
+	}
+
+	var status OrderPaymentStatus
+	if transaction.TransactionStatus == "capture" {
+		if transaction.FraudStatus == "challenge" {
+			status = OrderPending
+		} else if transaction.FraudStatus == "accept" {
+			status = OrderSuccess
+		}
+	} else if transaction.TransactionStatus == "settlement" {
+		status = OrderSuccess
+	} else if transaction.TransactionStatus == "deny" {
+		status = OrderPending
+	} else if transaction.TransactionStatus == "cancel" {
+		status = OrderCancel
+	} else if transaction.TransactionStatus == "expire" {
+		status = OrderCancel
+	} else {
+		status = OrderPending
+	}
+
+	result := &ResponsePayment{
+		TransactionID:   transaction.TransactionID,
+		OrderID:         transaction.OrderID,
+		PaymentVendor:   "midtrans",
+		Status:          status,
+		TransactionTime: transaction.TransactionTime,
+	}
 
 	return result, nil
 }
@@ -105,7 +135,7 @@ func responseFormatted(response *coreapi.ChargeResponse) (*ResponsePayment, erro
 	result.OrderID = response.OrderID
 	result.PaymentVendor = "midtrans"
 	result.TransactionTime = response.TransactionTime
-	result.Status = response.TransactionStatus
+	result.Status = OrderPending
 
 	switch response.PaymentType {
 	case "bank_transfer":

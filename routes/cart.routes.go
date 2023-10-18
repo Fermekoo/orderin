@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func CartRoutes(config utils.Config, routes *gin.RouterGroup) {
+func CartRoutes(config *utils.Config, routes *gin.RouterGroup) {
 
 	service := services.NewCartService(config, db.Connect(config))
 	handler := handler.NewCartHandler(service)

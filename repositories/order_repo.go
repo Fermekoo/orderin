@@ -3,6 +3,7 @@ package repositories
 import (
 	"github.com/Fermekoo/orderin-api/db/models"
 	"github.com/Fermekoo/orderin-api/domains"
+	"github.com/Fermekoo/orderin-api/payment"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -69,5 +70,25 @@ func (repo *orderRepo) Create(checkout *models.Checkout) error {
 		return nil
 	})
 
+	return err
+}
+
+func (repo *orderRepo) GetCheckoutById(checkoutId uuid.UUID) (*models.Checkout, error) {
+	var checkout *models.Checkout
+	err := repo.db.Where("id", checkoutId).First(&checkout).Error
+	return checkout, err
+}
+
+func (repo *orderRepo) UpdateCheckoutStatus(updatePayload *domains.UpdateCheckout) error {
+
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Table("checkouts").Where("id = ?", updatePayload.CheckoutId).Where("payment_status", payment.OrderPending).Updates(map[string]interface{}{
+			"payment_status": updatePayload.Status,
+			"success_at":     updatePayload.SuccessAt,
+		}).Error; err != nil {
+			return err
+		}
+		return nil
+	})
 	return err
 }

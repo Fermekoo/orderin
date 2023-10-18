@@ -16,10 +16,10 @@ import (
 
 type ApiServer struct {
 	router *gin.Engine
-	config utils.Config
+	config *utils.Config
 }
 
-func NewApiServer(config utils.Config) (*ApiServer, error) {
+func NewApiServer(config *utils.Config) (*ApiServer, error) {
 	server := &ApiServer{
 		config: config,
 	}
@@ -50,6 +50,7 @@ func (server *ApiServer) setupRouter() {
 	routes.ProductRoutes(server.config, v1)
 	routes.CartRoutes(server.config, v1)
 	routes.OrderRoutes(server.config, v1)
+	routes.CallbackRoutes(server.config, v1)
 
 	server.router = router
 }

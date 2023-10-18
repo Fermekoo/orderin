@@ -7,22 +7,35 @@ import (
 )
 
 type PaymentImpl struct {
-	Payment Payment
+	Payment       Payment
+	paymentVendor PaymentVendor
 }
 
-func NewPayment(config utils.Config) (*PaymentImpl, error) {
+func NewPayment(config *utils.Config, paymentVendor PaymentVendor) (*PaymentImpl, error) {
 	var service Payment
 	var err error
-	switch config.PaymentVendor {
+	switch paymentVendor {
 	case "midtrans":
 		service = NewMidtrans(config)
 	default:
 		err = errors.New("service not available")
 	}
 
-	return &PaymentImpl{service}, err
+	return &PaymentImpl{
+		Payment:       service,
+		paymentVendor: paymentVendor,
+	}, err
 }
 
 func (p *PaymentImpl) Pay(payloads *CreatePayment) (*ResponsePayment, error) {
 	return p.Payment.Pay(payloads)
+}
+
+func (p *PaymentImpl) Inquiry(orderId string) (result *ResponsePayment, err error) {
+	transaction, err := p.Payment.Inquiry(orderId)
+	if err != nil {
+		return nil, err
+	}
+
+	return transaction, err
 }

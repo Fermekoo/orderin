@@ -13,11 +13,11 @@ import (
 )
 
 type cartService struct {
-	config   utils.Config
+	config   *utils.Config
 	cartRepo domains.CartRepo
 }
 
-func NewCartService(config utils.Config, db *gorm.DB) domains.CartService {
+func NewCartService(config *utils.Config, db *gorm.DB) domains.CartService {
 	cartRepo := repositories.NewCartRepo(db)
 
 	return &cartService{
