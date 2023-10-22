@@ -19,7 +19,7 @@ jobs:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: gokapster
         ports:
-          - 3307:3307
+          - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
@@ -40,7 +40,7 @@ jobs:
 
     - name: db migrations
       run: |
-        export DATABASE_URL="mysql://root:root@0.0.0.0:3307/gokapster"
+        export DATABASE_URL="mysql://root:root@tcp(localhost:3306)/gokapster"
         export MIGRATE_PATH="db/migrations"
         migrate -database $DATABASE_URL -path $MIGRATE_PATH -verbose up
 
