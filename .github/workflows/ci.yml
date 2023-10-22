@@ -39,7 +39,10 @@ jobs:
         which migrate
 
     - name: db migrations
-      run: make migrateup
+      run: |
+        export DATABASE_URL="mysql://root:root@tcp(127.0.0.1:port)/gokapster"
+        export MIGRATE_PATH="db/migrations"
+        migrate -database $DATABASE_URL -path $MIGRATE_PATH -verbose up
 
     - name: test
       run: make test
