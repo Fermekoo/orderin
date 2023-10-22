@@ -1,0 +1,30 @@
+name: orderin-api-workflows
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+
+  test:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Set up go 1.x
+      uses: actions/setup-go@v2
+      with: 
+        go-version: ^1.19
+      id: go
+    
+    - name: Checkout code into the GO module directory
+      uses: actions/checkout@v2
+
+    - name: test
+      run: make test
+      
+
+
+
