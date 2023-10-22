@@ -2,10 +2,10 @@ createmigrate:
 	migrate create -ext sql -dir db/migrations -seq $(name)
 
 migrateup:
-	migrate -path db/migrations -database "mysql://root:root@tcp(localhost:3307)/gokapster?multiStatements=true" -verbose up
+	migrate -path db/migrations -database "root:root@tcp(127.0.0.1:3307)/gokapster?multiStatements=true" -verbose up
 
 migratedown:
-	migrate -path db/migrations -database "mysql://root:root@tcp(localhost:3307)/gokapster?multiStatements=true" -verbose down
+	migrate -path db/migrations -database "root:root@tcp(127.0.0.1:3307)/gokapster?multiStatements=true" -verbose down
 
 run:
 	go run cmd/main.go

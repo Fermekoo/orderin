@@ -11,8 +11,18 @@ jobs:
   test:
     name: Build
     runs-on: ubuntu-latest
-    steps:
 
+    services:
+      mysql:
+        image: mysql:latest
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: gokapster
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
     - name: Set up go 1.x
       uses: actions/setup-go@v2
       with: 
@@ -21,6 +31,18 @@ jobs:
     
     - name: Checkout code into the GO module directory
       uses: actions/checkout@v2
+
+    - name: Install golang migrate
+      run: |
+        curl -L https://github.com/golang-migrate/migrate/releases/download/v4.16.2/migrate.linux-amd64.tar.gz | tar xvz
+        sudo mv migrate /usr/bin/
+        which migrate
+
+    - name: db migrations
+      run: |
+        export DATABASE_URL="mysql://root:root@tcp(localhost:3306)/gokapster"
+        export MIGRATE_PATH="db/migrations"
+        migrate -database $DATABASE_URL -path $MIGRATE_PATH -verbose up
 
     - name: test
       run: make test
