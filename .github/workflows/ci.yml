@@ -40,7 +40,7 @@ jobs:
 
     - name: db migrations
       run: |
-        export DATABASE_URL="mysql://root:root@tcp(127.0.0.1:port)/gokapster"
+        export DATABASE_URL="mysql://root:root@tcp(127.0.0.1:3307)/gokapster"
         export MIGRATE_PATH="db/migrations"
         migrate -database $DATABASE_URL -path $MIGRATE_PATH -verbose up
 
