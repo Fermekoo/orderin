@@ -5,6 +5,7 @@ import (
 
 	"github.com/Fermekoo/orderin-api/domains"
 	"github.com/Fermekoo/orderin-api/utils"
+	"github.com/Fermekoo/orderin-api/utils/token"
 	"github.com/gin-gonic/gin"
 )
 
@@ -24,8 +25,10 @@ func (handler *UserHandler) Register(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, err))
 		return
 	}
+	request.UserAgent = ctx.Request.UserAgent()
+	request.IP = ctx.ClientIP()
 
-	register, err := handler.service.Register(ctx, &request)
+	register, err := handler.service.Register(ctx.Request.Context(), &request)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, err))
 		return
@@ -41,7 +44,10 @@ func (handler *UserHandler) Login(ctx *gin.Context) {
 		return
 	}
 
-	login, err := handler.service.Login(ctx, &request)
+	request.UserAgent = ctx.Request.UserAgent()
+	request.IP = ctx.ClientIP()
+
+	login, err := handler.service.Login(ctx.Request.Context(), &request)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, utils.ErrorResponse(http.StatusBadRequest, err))
 		return
@@ -51,7 +57,8 @@ func (handler *UserHandler) Login(ctx *gin.Context) {
 }
 
 func (handler *UserHandler) Profile(ctx *gin.Context) {
-	profile, err := handler.service.Profile(ctx)
+	authUser := ctx.MustGet(utils.AUTH_PAYLOAD_KEY).(*token.Payload)
+	profile, err := handler.service.Profile(ctx.Request.Context(), authUser.UserID)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, utils.ErrorResponse(http.StatusNotFound, err))
 		return
@@ -67,7 +74,7 @@ func (handler *UserHandler) RefreshToken(ctx *gin.Context) {
 		return
 	}
 
-	refreshToken, err := handler.service.RenewAccessToken(ctx, &request)
+	refreshToken, err := handler.service.RenewAccessToken(ctx.Request.Context(), &request)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, err))
 		return

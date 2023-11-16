@@ -19,7 +19,7 @@ func NewCategoryHandler(service domains.CategoryService) *Categoryhandler {
 }
 
 func (handler *Categoryhandler) GetAll(ctx *gin.Context) {
-	categories, err := handler.service.Categories()
+	categories, err := handler.service.Categories(ctx.Request.Context())
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, err))
 		return

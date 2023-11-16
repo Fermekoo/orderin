@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"sync"
 	"time"
@@ -10,7 +11,6 @@ import (
 	"github.com/Fermekoo/orderin-api/payment"
 	"github.com/Fermekoo/orderin-api/repositories"
 	"github.com/Fermekoo/orderin-api/utils"
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -32,9 +32,9 @@ func NewOrderService(config *utils.Config, db *gorm.DB) domains.OrderService {
 	}
 }
 
-func (service *orderService) CreateInvoice(ctx *gin.Context, payloads domains.AddInvoice) error {
-	authUser := getAuthUser(ctx)
-	carts, err := service.cartRepo.GetSelectedItems(authUser.UserID, payloads.CartItems)
+func (service *orderService) CreateInvoice(ctx context.Context, userID uuid.UUID, payloads *domains.AddInvoice) error {
+
+	carts, err := service.cartRepo.GetSelectedItems(ctx, userID, payloads.CartItems)
 	if err != nil {
 		return err
 	}
@@ -115,7 +115,7 @@ func (service *orderService) CreateInvoice(ctx *gin.Context, payloads domains.Ad
 
 	checkout := &models.Checkout{
 		ID:             checkoutId,
-		UserID:         authUser.UserID,
+		UserID:         userID,
 		Total:          totalPayment,
 		PaymentVendor:  createPayment.PaymentVendor,
 		PaymentChannel: createPayment.PaymentChannel,
@@ -126,14 +126,14 @@ func (service *orderService) CreateInvoice(ctx *gin.Context, payloads domains.Ad
 		Order:          groupedInvoicesByMerchant,
 	}
 
-	err = service.orderRepo.Create(checkout)
+	err = service.orderRepo.Create(ctx, checkout)
 
 	return err
 }
 
-func (service *orderService) UpdateStatusPayment(ctx *gin.Context, checkoutId uuid.UUID) error {
+func (service *orderService) UpdateStatusPayment(ctx context.Context, checkoutId uuid.UUID) error {
 
-	checkout, err := service.orderRepo.GetCheckoutById(checkoutId)
+	checkout, err := service.orderRepo.GetCheckoutById(ctx, checkoutId)
 	if err != nil {
 		return err
 	}
@@ -162,7 +162,7 @@ func (service *orderService) UpdateStatusPayment(ctx *gin.Context, checkoutId uu
 			updatePayload.SuccessAt = time.Now()
 		}
 
-		err := service.orderRepo.UpdateCheckoutStatus(updatePayload)
+		err := service.orderRepo.UpdateCheckoutStatus(ctx, updatePayload)
 		return err
 	}
 

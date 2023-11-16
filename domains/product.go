@@ -1,8 +1,9 @@
 package domains
 
 import (
+	"context"
+
 	"github.com/Fermekoo/orderin-api/db/models"
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
@@ -18,14 +19,18 @@ type ProductResponse struct {
 	Color       string    `json:"color"`
 }
 
+type ProductSearch struct {
+	Categories *string `json:"category"`
+}
+
 type ProductService interface {
-	Products(ctx *gin.Context) ([]ProductResponse, error)
-	Product(productId uuid.UUID) (ProductResponse, error)
-	ProductByCategory(categoryId string) ([]ProductResponse, error)
+	Products(ctx context.Context, search ProductSearch) ([]ProductResponse, error)
+	Product(ctx context.Context, productId uuid.UUID) (ProductResponse, error)
+	ProductByCategory(cctx context.Context, ategoryId string) ([]ProductResponse, error)
 }
 
 type ProductRepo interface {
-	GetAll() ([]models.Product, error)
-	FindById(productId uuid.UUID) (models.Product, error)
-	GetProductByCategoryId(categoryId string) ([]models.Product, error)
+	GetAll(ctx context.Context) ([]models.Product, error)
+	FindById(ctx context.Context, productId uuid.UUID) (models.Product, error)
+	GetProductByCategoryId(ctx context.Context, categoryId string) ([]models.Product, error)
 }

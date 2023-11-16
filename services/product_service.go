@@ -1,10 +1,11 @@
 package services
 
 import (
+	"context"
+
 	"github.com/Fermekoo/orderin-api/db/models"
 	"github.com/Fermekoo/orderin-api/domains"
 	"github.com/Fermekoo/orderin-api/repositories"
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -41,17 +42,16 @@ func productResponses(products []models.Product) ([]domains.ProductResponse, err
 	}
 	return result, nil
 }
-func (service *productService) Products(ctx *gin.Context) ([]domains.ProductResponse, error) {
-	categoryId, CategoryIdExists := ctx.GetQuery("category")
-	if CategoryIdExists && categoryId != "" {
+func (service *productService) Products(ctx context.Context, search domains.ProductSearch) ([]domains.ProductResponse, error) {
 
-		products, err := service.productRepo.GetProductByCategoryId(categoryId)
+	if search.Categories != nil && *search.Categories != "" {
+		products, err := service.productRepo.GetProductByCategoryId(ctx, *search.Categories)
 		if err != nil {
 			return nil, err
 		}
 		return productResponses(products)
 	} else {
-		products, err := service.productRepo.GetAll()
+		products, err := service.productRepo.GetAll(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -59,9 +59,9 @@ func (service *productService) Products(ctx *gin.Context) ([]domains.ProductResp
 	}
 }
 
-func (service *productService) Product(productId uuid.UUID) (domains.ProductResponse, error) {
+func (service *productService) Product(ctx context.Context, productId uuid.UUID) (domains.ProductResponse, error) {
 	var result = domains.ProductResponse{}
-	product, err := service.productRepo.FindById(productId)
+	product, err := service.productRepo.FindById(ctx, productId)
 	if err != nil {
 		return result, err
 	}
@@ -77,8 +77,8 @@ func (service *productService) Product(productId uuid.UUID) (domains.ProductResp
 	return result, nil
 }
 
-func (service *productService) ProductByCategory(categoryId string) ([]domains.ProductResponse, error) {
-	products, err := service.productRepo.GetProductByCategoryId(categoryId)
+func (service *productService) ProductByCategory(ctx context.Context, categoryId string) ([]domains.ProductResponse, error) {
+	products, err := service.productRepo.GetProductByCategoryId(ctx, categoryId)
 
 	if err != nil {
 		return nil, err

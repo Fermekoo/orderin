@@ -1,6 +1,8 @@
 package services
 
 import (
+	"context"
+
 	"github.com/Fermekoo/orderin-api/domains"
 	"github.com/Fermekoo/orderin-api/repositories"
 	"gorm.io/gorm"
@@ -18,9 +20,9 @@ func NewCategoryService(db *gorm.DB) domains.CategoryService {
 	}
 }
 
-func (service *categoryService) Categories() ([]domains.CategoryResponse, error) {
+func (service *categoryService) Categories(ctx context.Context) ([]domains.CategoryResponse, error) {
 	var result = []domains.CategoryResponse{}
-	categories, err := service.categoriesRepo.GetAll()
+	categories, err := service.categoriesRepo.GetAll(ctx)
 	if err != nil {
 		return result, err
 	}

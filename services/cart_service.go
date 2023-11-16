@@ -1,13 +1,13 @@
 package services
 
 import (
+	"context"
 	"errors"
 
 	"github.com/Fermekoo/orderin-api/db/models"
 	"github.com/Fermekoo/orderin-api/domains"
 	"github.com/Fermekoo/orderin-api/repositories"
 	"github.com/Fermekoo/orderin-api/utils"
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -26,10 +26,9 @@ func NewCartService(config *utils.Config, db *gorm.DB) domains.CartService {
 	}
 }
 
-func (service *cartService) Add(ctx *gin.Context, payload *domains.AddCart) error {
-	authUser := getAuthUser(ctx)
+func (service *cartService) Add(ctx context.Context, userId uuid.UUID, payload *domains.AddCart) error {
 
-	cart, err := service.cartRepo.FindByProductId(authUser.UserID, payload.ProductID)
+	cart, err := service.cartRepo.FindByProductId(ctx, userId, payload.ProductID)
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		err = nil
@@ -40,27 +39,26 @@ func (service *cartService) Add(ctx *gin.Context, payload *domains.AddCart) erro
 
 		cart := &models.Cart{
 			ID:        cartId,
-			UserID:    authUser.UserID,
+			UserID:    userId,
 			ProductID: payload.ProductID,
 			Quantity:  payload.Quantity,
 		}
-		err = service.cartRepo.Add(cart)
+		err = service.cartRepo.Add(ctx, cart)
 		if err != nil {
 			return err
 		}
 
 	} else {
-		err = service.cartRepo.UpdateQty(authUser.UserID, cart.ID, "+")
+		err = service.cartRepo.UpdateQty(ctx, userId, cart.ID, "+")
 	}
 
 	return err
 }
 
-func (service *cartService) GetAll(ctx *gin.Context) ([]domains.CartResponse, error) {
+func (service *cartService) GetAll(ctx context.Context, userID uuid.UUID) ([]domains.CartResponse, error) {
 	var groupedMerchants []domains.CartResponse
 
-	authUser := getAuthUser(ctx)
-	carts, err := service.cartRepo.GetAll(authUser.UserID)
+	carts, err := service.cartRepo.GetAll(ctx, userID)
 	if err != nil {
 		return groupedMerchants, err
 	}
@@ -97,24 +95,12 @@ func (service *cartService) GetAll(ctx *gin.Context) ([]domains.CartResponse, er
 	return groupedMerchants, nil
 }
 
-func (service *cartService) UpdateQty(ctx *gin.Context, updateQty *domains.UpdateQty) error {
-	authUser := getAuthUser(ctx)
-	cartId, err := uuid.Parse(ctx.Param("id"))
-	if err != nil {
-		return err
-	}
+func (service *cartService) UpdateQty(ctx context.Context, userID uuid.UUID, cartID uuid.UUID, updateQty *domains.UpdateQty) error {
 
-	err = service.cartRepo.UpdateQty(authUser.UserID, cartId, updateQty.Action)
-	return err
+	return service.cartRepo.UpdateQty(ctx, userID, cartID, updateQty.Action)
 }
 
-func (service *cartService) Delete(ctx *gin.Context) error {
-	authUser := getAuthUser(ctx)
-	cartId, err := uuid.Parse(ctx.Param("id"))
-	if err != nil {
-		return err
-	}
-	err = service.cartRepo.Delete(authUser.UserID, cartId)
+func (service *cartService) Delete(ctx context.Context, userID uuid.UUID, cartID uuid.UUID) error {
 
-	return err
+	return service.cartRepo.Delete(ctx, userID, cartID)
 }

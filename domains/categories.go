@@ -1,6 +1,8 @@
 package domains
 
 import (
+	"context"
+
 	"github.com/Fermekoo/orderin-api/db/models"
 	"github.com/google/uuid"
 )
@@ -14,9 +16,9 @@ type CategoryResponse struct {
 }
 
 type CategoryService interface {
-	Categories() ([]CategoryResponse, error)
+	Categories(ctx context.Context) ([]CategoryResponse, error)
 }
 
 type CategoriesRepo interface {
-	GetAll() ([]models.Categories, error)
+	GetAll(ctx context.Context) ([]models.Categories, error)
 }

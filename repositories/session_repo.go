@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/Fermekoo/orderin-api/db/models"
@@ -18,15 +19,15 @@ func NewSessionRepo(db *gorm.DB) domains.SessionRepo {
 	}
 }
 
-func (repo *sessionRepo) Create(payload *models.Session) (models.Session, error) {
-	err := repo.db.Create(&payload).Error
+func (repo *sessionRepo) Create(ctx context.Context, payload *models.Session) (models.Session, error) {
+	err := repo.db.WithContext(ctx).Create(&payload).Error
 	return *payload, err
 }
 
-func (repo *sessionRepo) FindByField(field string, value interface{}) (models.Session, error) {
+func (repo *sessionRepo) FindByField(ctx context.Context, field string, value interface{}) (models.Session, error) {
 	var session models.Session
 	field = fmt.Sprintf("%s = ?", field)
-	err := repo.db.First(&session, field, value).Error
+	err := repo.db.WithContext(ctx).First(&session, field, value).Error
 
 	return session, err
 }

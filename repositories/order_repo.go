@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"context"
+
 	"github.com/Fermekoo/orderin-api/db/models"
 	"github.com/Fermekoo/orderin-api/domains"
 	"github.com/Fermekoo/orderin-api/payment"
@@ -18,10 +20,10 @@ func NewOrderRepo(db *gorm.DB) domains.OrderRepo {
 	}
 }
 
-func (repo *orderRepo) Create(checkout *models.Checkout) error {
+func (repo *orderRepo) Create(ctx context.Context, checkout *models.Checkout) error {
 
 	orders := checkout.Order
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 
 		if err := tx.Omit("Order").Create(&checkout).Error; err != nil {
 			return err
@@ -73,15 +75,15 @@ func (repo *orderRepo) Create(checkout *models.Checkout) error {
 	return err
 }
 
-func (repo *orderRepo) GetCheckoutById(checkoutId uuid.UUID) (*models.Checkout, error) {
+func (repo *orderRepo) GetCheckoutById(ctx context.Context, checkoutId uuid.UUID) (*models.Checkout, error) {
 	var checkout *models.Checkout
-	err := repo.db.Where("id", checkoutId).First(&checkout).Error
+	err := repo.db.WithContext(ctx).Where("id", checkoutId).First(&checkout).Error
 	return checkout, err
 }
 
-func (repo *orderRepo) UpdateCheckoutStatus(updatePayload *domains.UpdateCheckout) error {
+func (repo *orderRepo) UpdateCheckoutStatus(ctx context.Context, updatePayload *domains.UpdateCheckout) error {
 
-	err := repo.db.Transaction(func(tx *gorm.DB) error {
+	err := repo.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Table("checkouts").Where("id = ?", updatePayload.CheckoutId).Where("payment_status", payment.OrderPending).Updates(map[string]interface{}{
 			"payment_status": updatePayload.Status,
 			"success_at":     updatePayload.SuccessAt,
