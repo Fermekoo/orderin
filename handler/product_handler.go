@@ -20,7 +20,12 @@ func NewProductHandler(service domains.ProductService) *ProductHandler {
 }
 
 func (handler *ProductHandler) GetAll(ctx *gin.Context) {
-	products, err := handler.service.Products(ctx)
+	categoryId, _ := ctx.GetQuery("category")
+
+	filter := domains.ProductSearch{
+		Categories: &categoryId,
+	}
+	products, err := handler.service.Products(ctx, filter)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, err))
 		return
@@ -36,7 +41,7 @@ func (handler *ProductHandler) Detail(ctx *gin.Context) {
 		return
 	}
 
-	product, err := handler.service.Product(productId)
+	product, err := handler.service.Product(ctx.Request.Context(), productId)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, err))
 		return

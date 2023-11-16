@@ -1,6 +1,8 @@
 package repositories
 
 import (
+	"context"
+
 	"github.com/Fermekoo/orderin-api/db/models"
 	"github.com/Fermekoo/orderin-api/domains"
 	"gorm.io/gorm"
@@ -16,10 +18,10 @@ func NewCategoriesRepo(db *gorm.DB) domains.CategoriesRepo {
 	}
 }
 
-func (repo *categoriesRepo) GetAll() ([]models.Categories, error) {
+func (repo *categoriesRepo) GetAll(ctx context.Context) ([]models.Categories, error) {
 	var categories []models.Categories
 
-	err := repo.db.Find(&categories).Error
+	err := repo.db.WithContext(ctx).Find(&categories).Error
 
 	return categories, err
 }

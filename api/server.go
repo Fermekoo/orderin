@@ -30,7 +30,7 @@ func NewApiServer(config *utils.Config) (*ApiServer, error) {
 func (server *ApiServer) setupRouter() {
 	router := gin.Default()
 	router.Use(func(c *gin.Context) {
-		ctx, cancel := context.WithTimeout(c.Request.Context(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(c.Request.Context(), time.Duration(server.config.TimeoutContext)*time.Second)
 		defer cancel()
 		c.Request = c.Request.WithContext(ctx)
 		c.Next()
@@ -73,7 +73,7 @@ func (server *ApiServer) Start(address string, ctx context.Context) {
 	select {
 	case sig := <-shutdown_channel:
 		log.Println("shutdown signal", sig)
-		ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		ctx, cancel := context.WithTimeout(ctx, time.Duration(server.config.TimeoutContext)*time.Second)
 		defer cancel()
 		if err := srv.Shutdown(ctx); err != nil {
 			srv.Close()

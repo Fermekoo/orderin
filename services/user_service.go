@@ -1,6 +1,7 @@
 package services
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
@@ -10,7 +11,6 @@ import (
 	"github.com/Fermekoo/orderin-api/repositories"
 	"github.com/Fermekoo/orderin-api/utils"
 	"github.com/Fermekoo/orderin-api/utils/token"
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -34,7 +34,7 @@ func NewUserService(config *utils.Config, db *gorm.DB, tokenMaker token.TokenMak
 	}
 }
 
-func (service *userService) Register(ctx *gin.Context, payload *domains.RegisterRequest) (domains.AuthResponse, error) {
+func (service *userService) Register(ctx context.Context, payload *domains.RegisterRequest) (domains.AuthResponse, error) {
 	var result domains.AuthResponse
 	hashedPassword, err := utils.HashPassword(payload.Password)
 	if err != nil {
@@ -48,7 +48,7 @@ func (service *userService) Register(ctx *gin.Context, payload *domains.Register
 		Fullname: payload.Fullname,
 		Phone:    payload.Phone,
 	}
-	user, err := service.userRepo.Create(inserData)
+	user, err := service.userRepo.Create(ctx, inserData)
 	if err != nil {
 		return result, err
 	}
@@ -66,24 +66,24 @@ func (service *userService) Register(ctx *gin.Context, payload *domains.Register
 		ID:           refreshPayload.ID,
 		UserId:       refreshPayload.UserID,
 		RefreshToken: refreshToken,
-		UserAgent:    ctx.Request.UserAgent(),
-		ClientIP:     ctx.ClientIP(),
+		UserAgent:    payload.UserAgent,
+		ClientIP:     payload.IP,
 		IsBlocked:    false,
 		ExpiresAt:    refreshPayload.ExpiredAt,
 	}
 
-	session, err := service.sessionRepo.Create(sessionInsertData)
+	session, err := service.sessionRepo.Create(ctx, sessionInsertData)
 	if err != nil {
 		return result, err
 	}
 
-	result = *generateAuthResponse(token, tokenPayload, refreshToken, refreshPayload, &session)
+	result = generateAuthResponse(token, tokenPayload, refreshToken, refreshPayload, &session)
 	return result, nil
 }
 
-func (service *userService) Login(ctx *gin.Context, payload *domains.LoginRequest) (domains.AuthResponse, error) {
+func (service *userService) Login(ctx context.Context, payload *domains.LoginRequest) (domains.AuthResponse, error) {
 	var result domains.AuthResponse
-	user, err := service.userRepo.FindByField("email", payload.Email)
+	user, err := service.userRepo.FindByField(ctx, "email", payload.Email)
 	if err != nil {
 		return result, err
 	}
@@ -107,25 +107,25 @@ func (service *userService) Login(ctx *gin.Context, payload *domains.LoginReques
 		ID:           refreshPayload.ID,
 		UserId:       refreshPayload.UserID,
 		RefreshToken: refreshToken,
-		UserAgent:    ctx.Request.UserAgent(),
-		ClientIP:     ctx.ClientIP(),
+		UserAgent:    payload.UserAgent,
+		ClientIP:     payload.IP,
 		IsBlocked:    false,
 		ExpiresAt:    refreshPayload.ExpiredAt,
 	}
 
-	session, err := service.sessionRepo.Create(sessionInsertData)
+	session, err := service.sessionRepo.Create(ctx, sessionInsertData)
 	if err != nil {
 		return result, err
 	}
 
-	result = *generateAuthResponse(token, tokenPayload, refreshToken, refreshPayload, &session)
+	result = generateAuthResponse(token, tokenPayload, refreshToken, refreshPayload, &session)
 	return result, nil
 }
 
-func (service *userService) Profile(ctx *gin.Context) (domains.UserResponse, error) {
+func (service *userService) Profile(ctx context.Context, userID uuid.UUID) (domains.UserResponse, error) {
 	var userResponse domains.UserResponse
-	authUser := ctx.MustGet(utils.AUTH_PAYLOAD_KEY).(*token.Payload)
-	user, err := service.userRepo.FindByField("id", authUser.UserID)
+
+	user, err := service.userRepo.FindByField(ctx, "id", userID)
 	if err != nil {
 		return userResponse, err
 	}
@@ -136,14 +136,14 @@ func (service *userService) Profile(ctx *gin.Context) (domains.UserResponse, err
 	return userResponse, nil
 }
 
-func (service *userService) RenewAccessToken(ctx *gin.Context, payload *domains.RenewAccessToken) (domains.AuthResponse, error) {
+func (service *userService) RenewAccessToken(ctx context.Context, payload *domains.RenewAccessToken) (domains.AuthResponse, error) {
 	var result domains.AuthResponse
 
 	refreshPayload, err := service.tokenMaker.VerifyToken(service.config.RefreshTokenSecretKey, payload.RefreshToken)
 	if err != nil {
 		return result, err
 	}
-	session, err := service.sessionRepo.FindByField("id", refreshPayload.ID)
+	session, err := service.sessionRepo.FindByField(ctx, "id", refreshPayload.ID)
 	if err != nil {
 		return result, err
 	}
@@ -165,13 +165,13 @@ func (service *userService) RenewAccessToken(ctx *gin.Context, payload *domains.
 		return result, err
 	}
 
-	result = *generateAuthResponse(accessToken, accessTokenPayload, payload.RefreshToken, refreshPayload, &session)
+	result = generateAuthResponse(accessToken, accessTokenPayload, payload.RefreshToken, refreshPayload, &session)
 
 	return result, nil
 }
 
-func generateAuthResponse(token string, tokenPayload *token.Payload, refreshToken string, refreshPayload *token.Payload, session *models.Session) *domains.AuthResponse {
-	return &domains.AuthResponse{
+func generateAuthResponse(token string, tokenPayload *token.Payload, refreshToken string, refreshPayload *token.Payload, session *models.Session) domains.AuthResponse {
+	return domains.AuthResponse{
 		Token: &domains.TokenResponse{
 			SessionID:             session.ID,
 			AccessToken:           token,

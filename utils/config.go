@@ -20,6 +20,7 @@ type Config struct {
 	MidtransClientKey     string        `mapstructure:"MIDTRANS_CLIENT_KEY"`
 	MidtransServerKey     string        `mapstructure:"MIDTRANS_SERVER_KEY"`
 	PaymentVendor         string        `mapstructure:"PAYMENT_VENDOR"`
+	TimeoutContext        int           `mapstructure:"TIMEOUT_CONTEXT"`
 }
 
 func LoadConfig(path string) (config Config, err error) {

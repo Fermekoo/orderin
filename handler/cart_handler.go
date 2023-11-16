@@ -6,6 +6,7 @@ import (
 	"github.com/Fermekoo/orderin-api/domains"
 	"github.com/Fermekoo/orderin-api/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 type CartHandler struct {
@@ -25,7 +26,7 @@ func (handler *CartHandler) AddCart(ctx *gin.Context) {
 		return
 	}
 
-	err := handler.service.Add(ctx, &request)
+	err := handler.service.Add(ctx.Request.Context(), getUserId(ctx), &request)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, err))
 		return
@@ -35,7 +36,7 @@ func (handler *CartHandler) AddCart(ctx *gin.Context) {
 }
 
 func (handler *CartHandler) GetAll(ctx *gin.Context) {
-	carts, err := handler.service.GetAll(ctx)
+	carts, err := handler.service.GetAll(ctx.Request.Context(), getUserId(ctx))
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, err))
 		return
@@ -51,7 +52,13 @@ func (handler *CartHandler) UpdateQty(ctx *gin.Context) {
 		return
 	}
 
-	err := handler.service.UpdateQty(ctx, &request)
+	cartId, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, err))
+		return
+	}
+
+	err = handler.service.UpdateQty(ctx.Request.Context(), getUserId(ctx), cartId, &request)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, err))
 		return
@@ -61,7 +68,13 @@ func (handler *CartHandler) UpdateQty(ctx *gin.Context) {
 }
 
 func (handler *CartHandler) Delete(ctx *gin.Context) {
-	err := handler.service.Delete(ctx)
+	cartId, err := uuid.Parse(ctx.Param("id"))
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, err))
+		return
+	}
+
+	err = handler.service.Delete(ctx.Request.Context(), getUserId(ctx), cartId)
 	if err != nil {
 		ctx.JSON(http.StatusUnprocessableEntity, utils.ErrorResponse(http.StatusUnprocessableEntity, err))
 		return

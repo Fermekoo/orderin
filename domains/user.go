@@ -1,18 +1,20 @@
 package domains
 
 import (
+	"context"
 	"time"
 
 	"github.com/Fermekoo/orderin-api/db/models"
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 type RegisterRequest struct {
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required,min=6"`
-	Fullname string `json:"fullname" binding:"required"`
-	Phone    string `json:"phone" binding:"required"`
+	Email     string `json:"email" binding:"required"`
+	Password  string `json:"password" binding:"required,min=6"`
+	Fullname  string `json:"fullname" binding:"required"`
+	Phone     string `json:"phone" binding:"required"`
+	UserAgent string
+	IP        string
 }
 
 type AuthResponse struct {
@@ -29,8 +31,10 @@ type TokenResponse struct {
 }
 
 type LoginRequest struct {
-	Email    string `json:"email" binding:"required"`
-	Password string `json:"password" binding:"required"`
+	Email     string `json:"email" binding:"required"`
+	Password  string `json:"password" binding:"required"`
+	UserAgent string
+	IP        string
 }
 
 type UserResponse struct {
@@ -45,18 +49,18 @@ type RenewAccessToken struct {
 }
 
 type UserService interface {
-	Register(ctx *gin.Context, payload *RegisterRequest) (AuthResponse, error)
-	Login(ctx *gin.Context, payload *LoginRequest) (AuthResponse, error)
-	Profile(ctx *gin.Context) (UserResponse, error)
-	RenewAccessToken(ctx *gin.Context, payload *RenewAccessToken) (AuthResponse, error)
+	Register(ctx context.Context, payload *RegisterRequest) (AuthResponse, error)
+	Login(ctx context.Context, payload *LoginRequest) (AuthResponse, error)
+	Profile(ctx context.Context, userID uuid.UUID) (UserResponse, error)
+	RenewAccessToken(ctx context.Context, payload *RenewAccessToken) (AuthResponse, error)
 }
 
 type UserRepo interface {
-	Create(payload *models.User) (models.User, error)
-	FindByField(field string, value interface{}) (models.User, error)
+	Create(ctx context.Context, payload *models.User) (models.User, error)
+	FindByField(ctx context.Context, field string, value interface{}) (models.User, error)
 }
 
 type SessionRepo interface {
-	Create(payload *models.Session) (models.Session, error)
-	FindByField(field string, value interface{}) (models.Session, error)
+	Create(ctx context.Context, payload *models.Session) (models.Session, error)
+	FindByField(ctx context.Context, field string, value interface{}) (models.Session, error)
 }

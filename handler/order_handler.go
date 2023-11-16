@@ -25,7 +25,7 @@ func (handler *OrderHandler) Order(ctx *gin.Context) {
 		return
 	}
 
-	err := handler.service.CreateInvoice(ctx, request)
+	err := handler.service.CreateInvoice(ctx, getUserId(ctx), &request)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, utils.ErrorResponse(http.StatusInternalServerError, err))
 		return
