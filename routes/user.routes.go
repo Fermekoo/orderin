@@ -6,6 +6,7 @@ import (
 	"github.com/Fermekoo/orderin-api/db"
 	"github.com/Fermekoo/orderin-api/handler"
 	"github.com/Fermekoo/orderin-api/middleware"
+	"github.com/Fermekoo/orderin-api/repositories"
 	"github.com/Fermekoo/orderin-api/services"
 	"github.com/Fermekoo/orderin-api/utils"
 	"github.com/Fermekoo/orderin-api/utils/token"
@@ -17,7 +18,10 @@ func UserRoutes(config *utils.Config, routes *gin.RouterGroup) {
 	if err != nil {
 		log.Fatal("failed to setup token maker %w", err)
 	}
-	service := services.NewUserService(config, db.Connect(config), tokenMaker)
+	db := db.Connect(config)
+	userRepo := repositories.NewUserRepo(db)
+	sessionRepo := repositories.NewSessionRepo(db)
+	service := services.NewUserService(config, tokenMaker, userRepo, sessionRepo)
 	handler := handler.NewUserHandler(service)
 	authRoutes := routes.Group("/auth")
 	authRoutes.POST("/register", handler.Register)

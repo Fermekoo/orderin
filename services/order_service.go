@@ -9,10 +9,8 @@ import (
 	"github.com/Fermekoo/orderin-api/db/models"
 	"github.com/Fermekoo/orderin-api/domains"
 	"github.com/Fermekoo/orderin-api/payment"
-	"github.com/Fermekoo/orderin-api/repositories"
 	"github.com/Fermekoo/orderin-api/utils"
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 type orderService struct {
@@ -21,9 +19,7 @@ type orderService struct {
 	cartRepo  domains.CartRepo
 }
 
-func NewOrderService(config *utils.Config, db *gorm.DB) domains.OrderService {
-	orderRepo := repositories.NewOrderRepo(db)
-	cartRepo := repositories.NewCartRepo(db)
+func NewOrderService(config *utils.Config, orderRepo domains.OrderRepo, cartRepo domains.CartRepo) domains.OrderService {
 
 	return &orderService{
 		config:    config,

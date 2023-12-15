@@ -8,11 +8,9 @@ import (
 
 	"github.com/Fermekoo/orderin-api/db/models"
 	"github.com/Fermekoo/orderin-api/domains"
-	"github.com/Fermekoo/orderin-api/repositories"
 	"github.com/Fermekoo/orderin-api/utils"
 	"github.com/Fermekoo/orderin-api/utils/token"
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 type userService struct {
@@ -22,10 +20,7 @@ type userService struct {
 	tokenMaker  token.TokenMaker
 }
 
-func NewUserService(config *utils.Config, db *gorm.DB, tokenMaker token.TokenMaker) domains.UserService {
-	userRepo := repositories.NewUserRepo(db)
-	sessionRepo := repositories.NewSessionRepo(db)
-
+func NewUserService(config *utils.Config, tokenMaker token.TokenMaker, userRepo domains.UserRepo, sessionRepo domains.SessionRepo) domains.UserService {
 	return &userService{
 		config:      config,
 		userRepo:    userRepo,

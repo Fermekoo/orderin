@@ -4,17 +4,13 @@ import (
 	"context"
 
 	"github.com/Fermekoo/orderin-api/domains"
-	"github.com/Fermekoo/orderin-api/repositories"
-	"gorm.io/gorm"
 )
 
 type categoryService struct {
 	categoriesRepo domains.CategoriesRepo
 }
 
-func NewCategoryService(db *gorm.DB) domains.CategoryService {
-	categoriesRepo := repositories.NewCategoriesRepo(db)
-
+func NewCategoryService(categoriesRepo domains.CategoriesRepo) domains.CategoryService {
 	return &categoryService{
 		categoriesRepo: categoriesRepo,
 	}

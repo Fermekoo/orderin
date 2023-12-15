@@ -5,17 +5,15 @@ import (
 
 	"github.com/Fermekoo/orderin-api/db/models"
 	"github.com/Fermekoo/orderin-api/domains"
-	"github.com/Fermekoo/orderin-api/repositories"
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 type productService struct {
 	productRepo domains.ProductRepo
 }
 
-func NewProductService(db *gorm.DB) domains.ProductService {
-	productRepo := repositories.NewProductRepo(db)
+func NewProductService(productRepo domains.ProductRepo) domains.ProductService {
+	// productRepo := repositories.NewProductRepo(db)
 
 	return &productService{
 		productRepo: productRepo,

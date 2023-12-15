@@ -6,22 +6,16 @@ import (
 
 	"github.com/Fermekoo/orderin-api/db/models"
 	"github.com/Fermekoo/orderin-api/domains"
-	"github.com/Fermekoo/orderin-api/repositories"
-	"github.com/Fermekoo/orderin-api/utils"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type cartService struct {
-	config   *utils.Config
 	cartRepo domains.CartRepo
 }
 
-func NewCartService(config *utils.Config, db *gorm.DB) domains.CartService {
-	cartRepo := repositories.NewCartRepo(db)
-
+func NewCartService(cartRepo domains.CartRepo) domains.CartService {
 	return &cartService{
-		config:   config,
 		cartRepo: cartRepo,
 	}
 }

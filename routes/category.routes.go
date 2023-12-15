@@ -3,13 +3,15 @@ package routes
 import (
 	"github.com/Fermekoo/orderin-api/db"
 	"github.com/Fermekoo/orderin-api/handler"
+	"github.com/Fermekoo/orderin-api/repositories"
 	"github.com/Fermekoo/orderin-api/services"
 	"github.com/Fermekoo/orderin-api/utils"
 	"github.com/gin-gonic/gin"
 )
 
 func CategoryRoutes(config *utils.Config, routes *gin.RouterGroup) {
-	service := services.NewCategoryService(db.Connect(config))
+	categoriesRepo := repositories.NewCategoriesRepo(db.Connect(config))
+	service := services.NewCategoryService(categoriesRepo)
 	handler := handler.NewCategoryHandler(service)
 	routes.GET("/categories", handler.GetAll)
 }
