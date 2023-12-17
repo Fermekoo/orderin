@@ -13,8 +13,6 @@ type productService struct {
 }
 
 func NewProductService(productRepo domains.ProductRepo) domains.ProductService {
-	// productRepo := repositories.NewProductRepo(db)
-
 	return &productService{
 		productRepo: productRepo,
 	}
@@ -43,7 +41,12 @@ func productResponses(products []models.Product) ([]domains.ProductResponse, err
 func (service *productService) Products(ctx context.Context, search domains.ProductSearch) ([]domains.ProductResponse, error) {
 
 	if search.Categories != nil && *search.Categories != "" {
-		products, err := service.productRepo.GetProductByCategoryId(ctx, *search.Categories)
+
+		categoryId, err := uuid.Parse(*search.Categories)
+		if err != nil {
+			return nil, err
+		}
+		products, err := service.productRepo.GetProductByCategoryId(ctx, categoryId)
 		if err != nil {
 			return nil, err
 		}
@@ -75,7 +78,7 @@ func (service *productService) Product(ctx context.Context, productId uuid.UUID)
 	return result, nil
 }
 
-func (service *productService) ProductByCategory(ctx context.Context, categoryId string) ([]domains.ProductResponse, error) {
+func (service *productService) ProductByCategory(ctx context.Context, categoryId uuid.UUID) ([]domains.ProductResponse, error) {
 	products, err := service.productRepo.GetProductByCategoryId(ctx, categoryId)
 
 	if err != nil {

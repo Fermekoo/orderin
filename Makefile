@@ -35,4 +35,7 @@ dev: $(AIR) ## Starts AIR ( Continuous Development app).
 test :
 	go test -v -cover ./...
 
-.PHONY: createmigrate migrateup migratedown run
+createmock:
+	cd domains && mockery --name $(int)  --testonly --output ./mocks
+
+.PHONY: createmigrate migrateup migratedown run createmock
