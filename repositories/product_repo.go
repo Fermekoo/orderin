@@ -35,7 +35,7 @@ func (repo *productRepo) FindById(ctx context.Context, productId uuid.UUID) (mod
 	return product, err
 }
 
-func (repo *productRepo) GetProductByCategoryId(ctx context.Context, categoryId string) ([]models.Product, error) {
+func (repo *productRepo) GetProductByCategoryId(ctx context.Context, categoryId uuid.UUID) ([]models.Product, error) {
 	var products []models.Product
 
 	err := repo.db.WithContext(ctx).Preload("Category").Find(&products, "category_id = ?", categoryId).Error

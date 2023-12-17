@@ -26,11 +26,11 @@ type ProductSearch struct {
 type ProductService interface {
 	Products(ctx context.Context, search ProductSearch) ([]ProductResponse, error)
 	Product(ctx context.Context, productId uuid.UUID) (ProductResponse, error)
-	ProductByCategory(cctx context.Context, ategoryId string) ([]ProductResponse, error)
+	ProductByCategory(ctx context.Context, categoryId uuid.UUID) ([]ProductResponse, error)
 }
 
 type ProductRepo interface {
 	GetAll(ctx context.Context) ([]models.Product, error)
 	FindById(ctx context.Context, productId uuid.UUID) (models.Product, error)
-	GetProductByCategoryId(ctx context.Context, categoryId string) ([]models.Product, error)
+	GetProductByCategoryId(ctx context.Context, categoryId uuid.UUID) ([]models.Product, error)
 }
