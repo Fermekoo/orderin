@@ -21,6 +21,9 @@ type Config struct {
 	MidtransServerKey     string        `mapstructure:"MIDTRANS_SERVER_KEY"`
 	PaymentVendor         string        `mapstructure:"PAYMENT_VENDOR"`
 	TimeoutContext        int           `mapstructure:"TIMEOUT_CONTEXT"`
+	KafkaBootsrapServers  string        `mapstructure:"KAFKA_BOOTSTRAP_SERVER"`
+	KafkaGroupID          string        `mapstructure:"KAFKA_GROUPID"`
+	KafkaAutoOffsetReset  string        `mapstructure:"KAFKA_AUTO_OFFSET_RESET"`
 }
 
 func LoadConfig(path string) (config Config, err error) {

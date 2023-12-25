@@ -8,6 +8,7 @@ import (
 
 	"github.com/Fermekoo/orderin-api/db/models"
 	"github.com/Fermekoo/orderin-api/domains"
+	"github.com/Fermekoo/orderin-api/mq"
 	"github.com/Fermekoo/orderin-api/utils"
 	"github.com/Fermekoo/orderin-api/utils/token"
 	"github.com/google/uuid"
@@ -18,14 +19,16 @@ type userService struct {
 	userRepo    domains.UserRepo
 	sessionRepo domains.SessionRepo
 	tokenMaker  token.TokenMaker
+	mq          mq.MQAdapter
 }
 
-func NewUserService(config *utils.Config, tokenMaker token.TokenMaker, userRepo domains.UserRepo, sessionRepo domains.SessionRepo) domains.UserService {
+func NewUserService(config *utils.Config, tokenMaker token.TokenMaker, userRepo domains.UserRepo, sessionRepo domains.SessionRepo, mq mq.MQAdapter) domains.UserService {
 	return &userService{
 		config:      config,
 		userRepo:    userRepo,
 		sessionRepo: sessionRepo,
 		tokenMaker:  tokenMaker,
+		mq:          mq,
 	}
 }
 
@@ -109,6 +112,16 @@ func (service *userService) Login(ctx context.Context, payload *domains.LoginReq
 	}
 
 	session, err := service.sessionRepo.Create(ctx, sessionInsertData)
+	if err != nil {
+		return result, err
+	}
+	loginMsgKey, err := uuid.NewRandom()
+	if err != nil {
+		return result, err
+	}
+
+	message := fmt.Sprintf("user id %s has been log in", tokenPayload.UserID)
+	err = service.mq.Publish("login-orderin-api", loginMsgKey.String(), []byte(message))
 	if err != nil {
 		return result, err
 	}

@@ -6,6 +6,7 @@ import (
 	"github.com/Fermekoo/orderin-api/db"
 	"github.com/Fermekoo/orderin-api/handler"
 	"github.com/Fermekoo/orderin-api/middleware"
+	"github.com/Fermekoo/orderin-api/mq"
 	"github.com/Fermekoo/orderin-api/repositories"
 	"github.com/Fermekoo/orderin-api/services"
 	"github.com/Fermekoo/orderin-api/utils"
@@ -21,7 +22,10 @@ func UserRoutes(config *utils.Config, routes *gin.RouterGroup) {
 	db := db.Connect(config)
 	userRepo := repositories.NewUserRepo(db)
 	sessionRepo := repositories.NewSessionRepo(db)
-	service := services.NewUserService(config, tokenMaker, userRepo, sessionRepo)
+	mq := mq.NewKafkaMQ(config)
+	mq.Connect()
+	// defer mq.Disconnect()
+	service := services.NewUserService(config, tokenMaker, userRepo, sessionRepo, mq)
 	handler := handler.NewUserHandler(service)
 	authRoutes := routes.Group("/auth")
 	authRoutes.POST("/register", handler.Register)
