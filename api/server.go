@@ -2,35 +2,18 @@ package api
 
 import (
 	"context"
-	"log"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
-	"github.com/Fermekoo/orderin-api/routes"
 	"github.com/Fermekoo/orderin-api/utils"
 	"github.com/gin-gonic/gin"
 )
 
-type ApiServer struct {
-	router *gin.Engine
-	config *utils.Config
-}
-
-func NewApiServer(config *utils.Config) (*ApiServer, error) {
-	server := &ApiServer{
-		config: config,
-	}
-	server.setupRouter()
-	return server, nil
-}
-
-func (server *ApiServer) setupRouter() {
+func Start(config *utils.Config) *gin.Engine {
 	router := gin.Default()
+
 	router.Use(func(c *gin.Context) {
-		ctx, cancel := context.WithTimeout(c.Request.Context(), time.Duration(server.config.TimeoutContext)*time.Second)
+		ctx, cancel := context.WithTimeout(c.Request.Context(), time.Duration(config.TimeoutContext)*time.Second)
 		defer cancel()
 		c.Request = c.Request.WithContext(ctx)
 		c.Next()
@@ -43,45 +26,5 @@ func (server *ApiServer) setupRouter() {
 		})
 	})
 
-	v1 := router.Group("/v1")
-	v1.Static("/assets", "./assets")
-	routes.UserRoutes(server.config, v1)
-	routes.CategoryRoutes(server.config, v1)
-	routes.ProductRoutes(server.config, v1)
-	routes.CartRoutes(server.config, v1)
-	routes.OrderRoutes(server.config, v1)
-	routes.CallbackRoutes(server.config, v1)
-
-	server.router = router
-}
-
-func (server *ApiServer) Start(address string, ctx context.Context) {
-	srv := &http.Server{
-		Addr:    address,
-		Handler: server.router,
-	}
-
-	server_err := make(chan error, 1)
-	go func() {
-		server_err <- srv.ListenAndServe()
-
-	}()
-
-	shutdown_channel := make(chan os.Signal, 1)
-	signal.Notify(shutdown_channel, syscall.SIGINT, syscall.SIGTERM)
-
-	select {
-	case sig := <-shutdown_channel:
-		log.Println("shutdown signal", sig)
-		ctx, cancel := context.WithTimeout(ctx, time.Duration(server.config.TimeoutContext)*time.Second)
-		defer cancel()
-		if err := srv.Shutdown(ctx); err != nil {
-			srv.Close()
-		}
-	case err := <-server_err:
-		if err != nil {
-			log.Fatalf("server : %v", err)
-		}
-	}
-	log.Printf("http server run on port %s", address)
+	return router
 }
