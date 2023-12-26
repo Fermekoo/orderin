@@ -1,7 +1,9 @@
 package mq
 
 import (
+	"fmt"
 	"sync"
+	"time"
 
 	"github.com/Fermekoo/orderin-api/utils"
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
@@ -22,13 +24,6 @@ func NewKafkaMQ(config *utils.Config) MQAdapter {
 
 func (k *KafkaMQ) Connect() error {
 
-	// producerConfig := &kafka.ConfigMap{
-	// 	"bootstrap.servers": "pkc-ew3qg.asia-southeast2.gcp.confluent.cloud:9092",
-	// 	"security.protocol": "SASL_SSL",
-	// 	"sasl.mechanisms":   "PLAIN",
-	// 	"sasl.username":     "NQHPLMAZTNH7UWVP",
-	// 	"sasl.password":     "Sgg90Q3AziGWbIJZs/KtQRoX7WY1eUyN4BMk2GbaUPDN9yn2T/PpdU0c9TBGpRla",
-	// }
 	producerConfig := &kafka.ConfigMap{
 		"bootstrap.servers": k.config.KafkaBootsrapServers,
 	}
@@ -82,41 +77,25 @@ func (k *KafkaMQ) Publish(topic string, key string, message []byte) error {
 	}
 	err := k.producer.Produce(msg, deliveryChan)
 	k.producer.Flush(10 * 1000)
-	// k.producer.Close()
-
 	return err
 }
 
-// func (k *KafkaMQ) Publish(topic string, key string, message []byte) error {
+func (k *KafkaMQ) Subscribe(topic string, wg *sync.WaitGroup) error {
+	defer wg.Done()
+	err := k.consumer.Subscribe(topic, nil)
+	if err != nil {
+		return err
+	}
 
-// 	if k.producer == nil {
-// 		return errors.New("producer is nil, cannot publish message")
-// 	}
+	run := true
 
-// 	errChan := make(chan error)
-// 	k.wgPub.Add(1)
-// 	go func() {
-// 		msg := &kafka.Message{
-// 			TopicPartition: kafka.TopicPartition{
-// 				Topic:     &topic,
-// 				Partition: kafka.PartitionAny,
-// 			},
-// 			Key:   []byte(key),
-// 			Value: message,
-// 		}
-// 		err := k.producer.Produce(msg, nil)
-// 		if err != nil {
-// 			errChan <- err
-// 		}
-
-// 		k.producer.Flush(4 * 1000)
-// 		k.wgPub.Done()
-// 	}()
-
-// 	err := <-errChan
-// 	return err
-// }
-
-func (k *KafkaMQ) Subscribe(topic string, handler func(message []byte) error) error {
+	for run {
+		msg, err := k.consumer.ReadMessage(1 * time.Second)
+		if err == nil {
+			fmt.Printf("message on %s: %s\n", msg.TopicPartition, string(msg.Value))
+		} else if !err.(kafka.Error).IsTimeout() {
+			fmt.Printf("consumer error: %v (%v)\n", err, msg)
+		}
+	}
 	return nil
 }

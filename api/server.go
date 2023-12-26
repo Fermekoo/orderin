@@ -10,7 +10,8 @@ import (
 )
 
 func Start(config *utils.Config) *gin.Engine {
-	router := gin.Default()
+	gin.SetMode(gin.ReleaseMode)
+	router := gin.New()
 
 	router.Use(func(c *gin.Context) {
 		ctx, cancel := context.WithTimeout(c.Request.Context(), time.Duration(config.TimeoutContext)*time.Second)

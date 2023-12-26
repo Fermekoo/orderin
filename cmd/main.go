@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/Fermekoo/orderin-api/db"
 	"github.com/Fermekoo/orderin-api/handler"
 	"github.com/Fermekoo/orderin-api/middleware"
+	"github.com/Fermekoo/orderin-api/mq"
 	"github.com/Fermekoo/orderin-api/repositories"
 	"github.com/Fermekoo/orderin-api/routes"
 	"github.com/Fermekoo/orderin-api/services"
@@ -35,9 +37,16 @@ func main() {
 	if err != nil {
 		log.Fatal("failed to setup token maker %w", err)
 	}
+	wg := &sync.WaitGroup{}
+
 	userRepo := repositories.NewUserRepo(db)
 	sessionRepo := repositories.NewSessionRepo(db)
-	userService := services.NewUserService(&config, tokenMaker, userRepo, sessionRepo)
+	mq := mq.NewKafkaMQ(&config)
+	mq.Connect()
+	go mq.Subscribe("login-orderin-api", wg)
+	wg.Wait()
+	defer mq.Disconnect()
+	userService := services.NewUserService(&config, tokenMaker, userRepo, sessionRepo, mq)
 	userHandler := handler.NewUserHandler(userService)
 	jwtMid := middleware.JWTMiddleware(&config)
 	routes.UserRoutes(v1, userHandler, jwtMid)
